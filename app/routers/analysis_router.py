@@ -13,7 +13,7 @@ from app.schemas import (
     OrderRequest,
     OrderResponse,
 )
-from app.services.analysis_service import run_analysis
+from app.services.analysis_service import get_historical_data, run_analysis
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
@@ -48,8 +48,6 @@ def get_chart(
     interval: str = Query("1d"),
     periods: int = Query(60, ge=20, le=500),
 ):
-    from app.services.analysis_service import get_historical_data
-
     chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
     df = get_historical_data(ticker, interval, chart_periods)
     series = compute_chart_data(df)
@@ -120,8 +118,6 @@ def technical_analysis(
     interval: str = Query("1d"),
     periods: int = Query(100, ge=20, le=500),
 ):
-    from app.core.strategies import compute_chart_data
-    from app.services.analysis_service import get_historical_data
     from app.services.technical_analysis import analyze_series
 
     chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)

@@ -15,3 +15,5 @@ whatsapp-gateway/node_modules/
 .mypy_cache/
 dist/
 build/
+setup-github.sh
+.opencode/

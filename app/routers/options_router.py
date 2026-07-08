@@ -173,6 +173,5 @@ def debug_toggle():
 
 @router.post("/debug/clear")
 def debug_clear():
-    from app.core.debug import debug as d
-    d.clear()
+    debug.clear()
     return {"status": "cleared"}
