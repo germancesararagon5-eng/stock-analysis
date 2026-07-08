@@ -1,3 +1,17 @@
+stock-analysis (1.0.1) unstable; urgency=medium
+
+  * [FIX] broker_manager.switch(): guarda y restaura broker anterior si falla conexión
+  * [FIX] BrokerConfig.extra: tipo Optional[dict] en vez de dict (type checking)
+  * [FIX] send_alert: parámetro to como Optional[str]
+  * [FIX] requirements.txt: agrega httpx (necesario para TestClient)
+  * [FIX] Frontend: corrige referencias a Twilio por Baileys (info engañosa)
+  * [FIX] Import de BROKER_MAP al inicio en config_router
+  * [FIX] debug_router: usa property active_broker en vez de _active_broker
+  * [FIX] .gitignore: agrega .opencode/ para no trackear config local
+  * [RM] Archivos no usados: __init__.py vacíos, LEARN.md, .env.test, ai_models/
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Wed, 08 Jul 2026 18:00:00 -0300
+
 stock-analysis (1.0.0) unstable; urgency=medium
 
   * Initial release del sistema de análisis técnico multi-broker.
