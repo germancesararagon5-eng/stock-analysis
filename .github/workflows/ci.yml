@@ -61,18 +61,15 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready -U user -d stockdb
+          --health-cmd "pg_isready -U user -d stockdb"
           --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
-      - run: pip install -r requirements.txt httpx
-      - run: |
-          PYTHONPATH=. pytest -v --tb=short -k "test_health or test_list_brokers or test_switch_broker or test_broker_status"
+      - run: pip install -r requirements.txt
+      - run: PYTHONPATH=. pytest -v --tb=short -k "test_health or test_list_brokers or test_switch_broker or test_broker_status"
         env:
-          DATABASE_URL: postgresql+asyncpg://user:pass@localhost:5432/stockdb
           DATABASE_URL_SYNC: postgresql://user:pass@localhost:5432/stockdb
           LOG_LEVEL: WARNING
-          REDIS_URL: ""
           WHATSAPP_GATEWAY_URL: http://localhost:3000
