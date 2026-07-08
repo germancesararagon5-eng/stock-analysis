@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import threading
 import time
@@ -179,6 +180,16 @@ class BackgroundAnalyzer:
             if len(self._results) > max_r:
                 self._results = self._results[-max_r:]
             self._config["last_run"] = datetime.now(timezone.utc).isoformat()
+
+        try:
+            from app.services.ws_manager import ws_manager
+            asyncio.run(ws_manager.broadcast({
+                "type": "background_results",
+                "data": batch_results,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }))
+        except Exception:
+            pass
 
         logger.info("Background cycle complete: %d tickers analyzed", len(batch_results))
 

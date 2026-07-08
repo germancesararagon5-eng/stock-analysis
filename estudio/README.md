@@ -17,6 +17,7 @@
 | `07-testing.md` | pytest, TestClient, mocks, cobertura | 2026-07-08 |
 | `08-whatsapp-baileys.md` | WhatsApp gateway, Node.js, Baileys | 2026-07-08 |
 | `09-herramientas.md` | Ruff, linting, formateo, calidad de código | 2026-07-08 |
+| `10-websockets.md` | WebSockets, tiempo real, broadcast, ws_manager | 2026-07-08 |
 
 ## Cómo usar esto
 

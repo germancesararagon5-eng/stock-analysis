@@ -125,6 +125,25 @@ fetch('/api/algo', {
 });
 ```
 
+## WebSockets en FastAPI
+
+FastAPI soporta WebSocket de forma nativa con `@app.websocket()`:
+
+```python
+@app.websocket("/api/ws")
+async def ws_endpoint(ws: WebSocket):
+    await ws.accept()
+    try:
+        while True:
+            await ws.receive_text()   # Espera mensajes del cliente
+    except Exception:
+        pass
+    finally:
+        ws_manager.disconnect(ws)
+```
+
+Ver `estudio/10-websockets.md` para la guía completa.
+
 ## Uvicorn — El Servidor ASGI
 
 ```bash

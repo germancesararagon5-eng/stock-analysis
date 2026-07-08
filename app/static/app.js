@@ -111,6 +111,32 @@ const INFO = {
 //  UTILITY FUNCTIONS
 // ════════════════════════════════════════════════════════════════
 
+/* ── WebSocket ──────────────────────────────────── */
+let ws = null;
+let wsReconnectTimer = null;
+
+function connectWebSocket() {
+  if (ws && ws.readyState === WebSocket.OPEN) return;
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(proto + '//' + location.host + '/api/ws');
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'background_results') {
+        addLog('Background: ' + msg.data.length + ' tickers analizados', 'info');
+        if (document.getElementById('tab-options').classList.contains('active')) {
+          loadBackgroundResults();
+        }
+      }
+    } catch (e) { /* ignore */ }
+  };
+  ws.onclose = () => {
+    ws = null;
+    wsReconnectTimer = setTimeout(connectWebSocket, 5000);
+  };
+  ws.onerror = () => ws?.close();
+}
+
 /* ── Auth ──────────────────────────────────────── */
 function getToken() { return localStorage.getItem('token'); }
 function setToken(t) { localStorage.setItem('token', t); }
@@ -140,6 +166,7 @@ function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-header').style.display = 'flex';
   document.querySelector('main').style.display = 'block';
+  connectWebSocket();
 }
 
 function showRegister() {

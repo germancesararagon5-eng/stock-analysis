@@ -2,7 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +12,7 @@ from app.core.broker_manager import BrokerManager
 from app.core.debug import DebugMiddleware
 from app.database import init_db
 from app.routers import alerts_router, analysis_router, auth_router, config_router, debug_router, options_router
+from app.services.ws_manager import ws_manager
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -65,6 +66,18 @@ app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), na
 @app.get("/")
 def index():
     return FileResponse(Path(__file__).parent / "static" / "index.html")
+
+
+@app.websocket("/api/ws")
+async def websocket_endpoint(ws: WebSocket):
+    await ws_manager.connect(ws)
+    try:
+        while True:
+            await ws.receive_text()
+    except Exception:
+        pass
+    finally:
+        ws_manager.disconnect(ws)
 
 
 @app.get("/health")
