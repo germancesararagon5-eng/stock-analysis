@@ -1,8 +1,8 @@
-from unittest.mock import patch, MagicMock
-import pandas as pd
-import pytest
+from unittest.mock import MagicMock, patch
 
-from app.services.analysis_service import run_analysis, get_historical_data
+import pandas as pd
+
+from app.services.analysis_service import get_historical_data, run_analysis
 
 
 def test_get_historical_data():

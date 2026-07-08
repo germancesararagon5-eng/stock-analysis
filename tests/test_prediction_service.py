@@ -1,5 +1,3 @@
-from app.database import SessionLocal
-from app.models import Prediction
 from app.services.prediction_service import (
     get_prediction_stats,
     get_predictions,
