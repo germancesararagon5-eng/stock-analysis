@@ -32,7 +32,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements.txt
       - run: pip install -r requirements.txt pytest httpx
-      - run: pytest -v --tb=short
+      - run: PYTHONPATH=. pytest -v --tb=short
         env:
           DATABASE_URL: sqlite:///./test.db
           DATABASE_URL_SYNC: sqlite:///./test.db
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: pip install -r requirements.txt httpx
       - run: |
-          pytest -v --tb=short -k "test_health or test_list_brokers or test_switch_broker or test_broker_status"
+          PYTHONPATH=. pytest -v --tb=short -k "test_health or test_list_brokers or test_switch_broker or test_broker_status"
         env:
           DATABASE_URL: postgresql+asyncpg://user:pass@localhost:5432/stockdb
           DATABASE_URL_SYNC: postgresql://user:pass@localhost:5432/stockdb
