@@ -32,3 +32,11 @@ stock-analysis (1.0.0) unstable; urgency=medium
   * Docker Compose con 4 servicios: api, whatsapp-gateway, db, redis.
 
  -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Wed, 08 Jul 2026 17:00:00 -0300
+
+stock-analysis (1.0.2) unstable; urgency=medium
+
+  * [ADD] docs/ci-cd-guide.md: guía educativa completa de GitHub Actions
+  * [FIX] CI: agrega PYTHONPATH=. para que pytest encuentre el módulo app
+  * [FIX] CI: lo mismo para el job de integración
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Wed, 08 Jul 2026 18:30:00 -0300
