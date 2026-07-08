@@ -62,8 +62,11 @@ class BrokerManager:
                 f"Disponibles: {list(BROKER_MAP.keys())}"
             )
 
-        if self._active_broker is not None:
-            self._active_broker.disconnect()
+        old_broker = self._active_broker
+        old_name = self._active_name
+
+        if old_broker is not None:
+            old_broker.disconnect()
 
         config = BrokerConfig(
             name=name,
@@ -82,6 +85,11 @@ class BrokerManager:
             logger.info("Bróker activo cambiado a: %s", name)
         else:
             logger.error("Fallo al conectar bróker: %s", name)
+            if old_broker is not None:
+                old_broker.connect()
+                self._active_broker = old_broker
+                self._active_name = old_name
+                logger.info("Restaurado bróker anterior: %s", old_name)
 
         debug.track_broker_event(
             "switch" if connected else "switch_failed",
@@ -95,7 +103,7 @@ class BrokerManager:
             "sandbox": sandbox,
             "message": (
                 "Conectado correctamente" if connected
-                else "Fallo en la conexión"
+                else "Fallo en la conexión — restaurado broker anterior"
             ),
         }
 
@@ -110,3 +118,7 @@ class BrokerManager:
     @property
     def active_name(self) -> Optional[str]:
         return self._active_name
+
+    @property
+    def active_broker(self) -> Optional[BaseBroker]:
+        return self._active_broker

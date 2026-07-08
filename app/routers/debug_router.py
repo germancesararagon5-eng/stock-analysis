@@ -39,7 +39,7 @@ def debug_dashboard(
     snap["active_broker"] = broker_manager.active_name
     snap["broker_connected"] = (
         broker_manager.get_broker().is_connected
-        if broker_manager._active_broker
+        if broker_manager.active_broker
         else False
     )
     return snap

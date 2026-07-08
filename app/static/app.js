@@ -91,9 +91,7 @@ const INFO = {
   },
   alerts: {
     title:'Alertas Automáticas',
-    desc:'Configura condiciones para recibir notificaciones cuando se cumplan. Pueden enviarse por WhatsApp (Twilio) cuando se detecte una señal de compra o venta.',
-    link:'https://www.twilio.com/docs/whatsapp',
-    linkLabel:'Twilio WhatsApp API',
+    desc:'Configura condiciones para recibir notificaciones cuando se cumplan. Pueden enviarse por WhatsApp (Baileys auto-hosteado) cuando se detecte una señal de compra o venta.',
   },
   debug: {
     title:'Depuración y Trazabilidad',

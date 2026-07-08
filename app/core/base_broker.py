@@ -10,7 +10,7 @@ class BrokerConfig:
     api_secret: Optional[str] = None
     endpoint: Optional[str] = None
     sandbox: bool = True
-    extra: dict[str, Any] = None
+    extra: Optional[dict[str, Any]] = None
 
 
 class BaseBroker(ABC):

@@ -1,0 +1,20 @@
+stock-analysis (1.0.0) unstable; urgency=medium
+
+  * Initial release del sistema de análisis técnico multi-broker.
+  * Multi-broker: Yahoo Finance, Binance testnet, IBKR placeholder.
+  * Estrategias: scalping (EMA 9/21, RSI 14, Bollinger Bands) y swing
+    (MACD, SMA 200, soportes/resistencias).
+  * Análisis técnico por reglas con veredicto, confianza y razones.
+  * Background analyzer configurable con predicciones automáticas.
+  * Resolución automática de predicciones (BUY/SELL/NEUTRAL → outcome).
+  * Alertas programables por ticker/estrategia/condición con envío WhatsApp.
+  * WhatsApp gateway auto-hosteado con Baileys (sin Twilio, sin costos).
+  * SPA vanilla con Chart.js 4.4.7, zoom plugin, 5 tabs, modal de mercado.
+  * Asistente de Trading integrado en la UI.
+  * Autocomplete inteligente con 50+ tickers y modo multi-ticker.
+  * Dashboard de depuración con live polling y trazabilidad.
+  * Persistencia de sesión WhatsApp entre reinicios Docker.
+  * CI pipeline: lint (ruff) → test (pytest + SQLite) → docker build → integration.
+  * Docker Compose con 4 servicios: api, whatsapp-gateway, db, redis.
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Wed, 08 Jul 2026 17:00:00 -0300

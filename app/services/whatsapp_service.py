@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import requests
 
@@ -33,7 +34,7 @@ def get_qr() -> dict:
 
 
 @timed
-def send_alert(message: str, to: str = None) -> dict:
+def send_alert(message: str, to: Optional[str] = None) -> dict:
     if not to:
         from app.database import SessionLocal
         from app.models import WhatsAppConfig as WhatsAppConfigModel

@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.core.broker_manager import BrokerManager
+from app.core.broker_manager import BROKER_MAP, BrokerManager
 from app.database import get_db
 from app.models import BrokerConfig as BrokerConfigModel
 from app.schemas import BrokerSwitchRequest, BrokerSwitchResponse
@@ -61,6 +61,4 @@ def broker_status():
 
 @router.get("/brokers")
 def list_brokers():
-    from app.core.broker_manager import BROKER_MAP
-
     return {"available_brokers": list(BROKER_MAP.keys())}
