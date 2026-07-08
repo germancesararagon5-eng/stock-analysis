@@ -72,6 +72,59 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
+## Autenticación JWT
+
+Agregamos autenticación JWT (JSON Web Token) para proteger los endpoints.
+
+### Cómo funciona
+
+```
+POST /api/auth/register  →  { username, email, password }  →  token JWT
+POST /api/auth/login     →  { username, password }         →  token JWT
+GET  /api/auth/me        →  Header: Bearer <token>         →  user info
+```
+
+El token se genera con `python-jose` y se verifica con una clave secreta:
+
+```python
+# app/services/auth_service.py
+def create_access_token(user_id: int) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=1440)
+    payload = {"sub": str(user_id), "exp": expire}
+    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
+```
+
+### Proteger un endpoint
+
+```python
+from app.services.auth_service import get_current_user
+
+@router.get("/secreto")
+def secreto(current_user: User = Depends(get_current_user)):
+    return {"msg": f"Hola {current_user.username}"}
+```
+
+### Dependencias
+
+Se agregaron 3 paquetes:
+
+```txt
+python-jose[cryptography]  # JWT encode/decode
+passlib[bcrypt]            # Hash de contraseñas
+bcrypt                     # Algoritmo de hash
+```
+
+### Frontend
+
+El token se guarda en `localStorage` y se envía en cada request:
+
+```javascript
+localStorage.setItem('token', token);
+fetch('/api/algo', {
+    headers: { 'Authorization': 'Bearer ' + token }
+});
+```
+
 ## Uvicorn — El Servidor ASGI
 
 ```bash

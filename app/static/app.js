@@ -111,12 +111,98 @@ const INFO = {
 //  UTILITY FUNCTIONS
 // ════════════════════════════════════════════════════════════════
 
+/* ── Auth ──────────────────────────────────────── */
+function getToken() { return localStorage.getItem('token'); }
+function setToken(t) { localStorage.setItem('token', t); }
+function clearToken() { localStorage.removeItem('token'); }
+
 async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(API + path, opts);
+  if (res.status === 401 && path !== '/api/auth/login') {
+    clearToken(); showAuthScreen();
+    return null;
+  }
   return res.json();
 }
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-header').style.display = 'none';
+  document.querySelector('main').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-header').style.display = 'flex';
+  document.querySelector('main').style.display = 'block';
+}
+
+function showRegister() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+  document.getElementById('register-error').textContent = '';
+}
+function showLogin() {
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('login-error').textContent = '';
+}
+
+async function handleLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  if (!username || !password) { err.textContent = 'Completá todos los campos'; return; }
+  err.textContent = '';
+  const res = await fetch(API + '/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) { err.textContent = data.detail || 'Error al iniciar sesión'; return; }
+  setToken(data.access_token);
+  showApp();
+  document.getElementById('user-display').textContent = username;
+  initApp();
+}
+
+async function handleRegister() {
+  const username = document.getElementById('register-username').value.trim();
+  const email = document.getElementById('register-email').value.trim();
+  const password = document.getElementById('register-password').value;
+  const err = document.getElementById('register-error');
+  if (!username || !email || !password) { err.textContent = 'Completá todos los campos'; return; }
+  err.textContent = '';
+  const res = await fetch(API + '/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password }),
+  });
+  const data = await res.json();
+  if (!res.ok) { err.textContent = data.detail || 'Error al registrarse'; return; }
+  setToken(data.access_token);
+  showApp();
+  document.getElementById('user-display').textContent = username;
+  initApp();
+}
+
+document.getElementById('login-btn').addEventListener('click', handleLogin);
+document.getElementById('register-btn').addEventListener('click', handleRegister);
+document.getElementById('logout-btn').addEventListener('click', () => {
+  clearToken(); showAuthScreen();
+});
+['login-username','login-password'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); })
+);
+['register-username','register-email','register-password'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); })
+);
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1410,30 +1496,25 @@ function stopOptionsPoll() {
 //  INIT
 // ════════════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Nav
+function initApp() {
+  showTab('dashboard');
+  loadDashboard();
+  if (window._debugInterval) return;
+
   document.querySelectorAll('nav button').forEach(b => {
     b.addEventListener('click', () => showTab(b.dataset.tab));
   });
 
-  // ── Init autocomplete on all ticker inputs ──
   createAutocomplete('dash-data-ticker', 'dash-data-dropdown');
   createAutocomplete('an-ticker', 'an-dropdown', (t) => {
-    // Auto-run analysis when ticker selected
     document.getElementById('an-btn').click();
   });
   createAutocomplete('ord-ticker', 'ord-dropdown');
   createAutocomplete('al-ticker', 'al-dropdown');
   createAutocomplete('bg-tickers', 'bg-dropdown', null, true);
 
-  // ── Dashboard ──
-  loadDashboard();
   document.getElementById('dash-data-btn').addEventListener('click', getData);
-
-  // ── Analysis ──
   document.getElementById('an-btn').addEventListener('click', runAnalysis);
-
-  // ── Order ──
   document.getElementById('ord-btn').addEventListener('click', placeOrder);
 
   // ── Alerts ──
@@ -1471,6 +1552,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Info popups ──
   initInfoPopups();
-
-  showTab('dashboard');
 });
+
+// Check auth on load
+const token = getToken();
+if (token) {
+  fetch(API + '/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(res => {
+      if (res.ok) {
+        showApp();
+        return res.json();
+      }
+      throw new Error('invalid');
+    })
+    .then(user => {
+      document.getElementById('user-display').textContent = user.username;
+      initApp();
+    })
+    .catch(() => { clearToken(); showAuthScreen(); });
+} else {
+  showAuthScreen();
+}

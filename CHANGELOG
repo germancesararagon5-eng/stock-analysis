@@ -1,3 +1,17 @@
+stock-analysis (1.2.0) unstable; urgency=medium
+
+  * [ADD] Autenticación JWT: registro, login, perfil
+  * [ADD] Modelo User en DB (username, email, password_hash)
+  * [ADD] auth_router.py: POST /api/auth/register, POST /api/auth/login, GET /api/auth/me
+  * [ADD] auth_service.py: JWT create/verify + get_current_user dependency
+  * [ADD] Config: jwt_secret, jwt_algorithm, jwt_expire_minutes
+  * [ADD] Frontend: pantalla de login/registro con token en localStorage
+  * [ADD] 8 tests de autenticación (registro, login, duplicados, token inválido)
+  * [ADD] estudio/04-python-fastapi.md: sección JWT con ejemplos
+  * [RM] Dependencias sobrantes: app/__init__.py vacío ya no está
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Wed, 08 Jul 2026 20:00:00 -0300
+
 stock-analysis (1.1.0) unstable; urgency=medium
 
   * [ADD] estudio/: directorio de estudio con 9 guías educativas

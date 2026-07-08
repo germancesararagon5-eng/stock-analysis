@@ -10,7 +10,33 @@
 </head>
 <body>
 
-<header>
+<div id="auth-screen">
+  <div class="auth-card">
+    <h1>📊 Stock Analysis</h1>
+    <p class="auth-subtitle">Multi-Broker Trading System</p>
+    <div id="auth-forms">
+      <div id="login-form">
+        <h3>Iniciar Sesión</h3>
+        <input type="text" id="login-username" placeholder="Usuario" autocomplete="username">
+        <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password">
+        <button id="login-btn">Ingresar</button>
+        <p class="auth-switch">¿No tenés cuenta? <a href="#" onclick="showRegister()">Registrate</a></p>
+        <p id="login-error" class="auth-error"></p>
+      </div>
+      <div id="register-form" style="display:none">
+        <h3>Crear Cuenta</h3>
+        <input type="text" id="register-username" placeholder="Usuario">
+        <input type="email" id="register-email" placeholder="Email">
+        <input type="password" id="register-password" placeholder="Contraseña">
+        <button id="register-btn">Crear Cuenta</button>
+        <p class="auth-switch">¿Ya tenés cuenta? <a href="#" onclick="showLogin()">Iniciar sesión</a></p>
+        <p id="register-error" class="auth-error"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header id="app-header" style="display:none">
   <h1>📊 Stock Analysis <span>Multi-Broker</span></h1>
   <nav>
     <button data-tab="dashboard" class="active">Dashboard</button>
@@ -19,6 +45,10 @@
     <button data-tab="options">Opciones</button>
     <button data-tab="debug">Depuración</button>
   </nav>
+  <div class="user-menu">
+    <span id="user-display"></span>
+    <button id="logout-btn" title="Cerrar sesión">🚪</button>
+  </div>
 </header>
 
 <main>

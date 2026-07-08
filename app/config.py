@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     whatsapp_gateway_url: str = "http://whatsapp-gateway:3000"
     log_level: str = "INFO"
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
+    jwt_secret: str = "cambiar-en-produccion-123456"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 1440
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

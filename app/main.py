@@ -11,7 +11,7 @@ from app.config import settings
 from app.core.broker_manager import BrokerManager
 from app.core.debug import DebugMiddleware
 from app.database import init_db
-from app.routers import alerts_router, analysis_router, config_router, debug_router, options_router
+from app.routers import alerts_router, analysis_router, auth_router, config_router, debug_router, options_router
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -52,6 +52,7 @@ app.add_middleware(
 )
 app.add_middleware(DebugMiddleware)
 
+app.include_router(auth_router.router)
 app.include_router(config_router.router)
 app.include_router(analysis_router.router)
 app.include_router(alerts_router.router)
