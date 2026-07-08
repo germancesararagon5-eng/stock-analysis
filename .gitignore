@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.env
+.env.local
+*.db
+.sqlite3
+node_modules/
+whatsapp-gateway/node_modules/
+.DS_Store
+*.log
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/

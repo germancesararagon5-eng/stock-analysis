@@ -1,0 +1,56 @@
+services:
+  api:
+    build: .
+    container_name: stock-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      whatsapp-gateway:
+        condition: service_started
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  whatsapp-gateway:
+    build: ./whatsapp-gateway
+    container_name: stock-whatsapp-gateway
+    ports:
+      - "3000:3000"
+    volumes:
+      - whatsapp-session:/app/session
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: stock-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: stockdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d stockdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: stock-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  whatsapp-session:

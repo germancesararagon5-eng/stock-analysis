@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Analysis</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>📊 Stock Analysis <span>Multi-Broker</span></h1>
+  <nav>
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="analysis">Análisis</button>
+    <button data-tab="alerts">Alertas</button>
+    <button data-tab="options">Opciones</button>
+    <button data-tab="debug">Depuración</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ══════════════════ DASHBOARD ══════════════════ -->
+<section id="tab-dashboard" class="tab active">
+
+  <div class="card">
+    <h2>
+      Estado del Sistema
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Broker Activo</h3>
+          <p>El broker es la fuente de datos financieros. Yahoo Finance es gratis para datos históricos y en tiempo real. Binance conecta con el exchange de cripto. Interactive Brokers es para trading profesional con acciones y forex.</p>
+          <a href="https://www.investopedia.com/terms/b/broker.asp" target="_blank" rel="noopener">↗ Investopedia: ¿Qué es un Broker?</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row">
+      <div class="col">
+        <div style="margin-bottom:16px">
+          <div style="font-size:28px;font-weight:700">
+            <span id="dash-dot" class="status-dot online"></span>
+            <span id="dash-broker">—</span>
+          </div>
+          <div style="color:var(--muted);font-size:14px">
+            Broker: <span id="dash-status">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>
+      Datos en Tiempo Real
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Datos de Mercado</h3>
+          <p>Obtiene el precio actual, apertura, máximo, mínimo, volumen y cambio porcentual del ticker seleccionado a través del broker activo.</p>
+          <a href="https://www.investopedia.com/terms/r/real-time-data.asp" target="_blank" rel="noopener">↗ Investopedia: Real-Time Data</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row">
+      <div class="col">
+        <label>Ticker</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="dash-data-ticker" placeholder="Buscar ticker…" autocomplete="off">
+          <button class="clear-btn">&times;</button>
+          <div class="autocomplete-dropdown" id="dash-data-dropdown"></div>
+        </div>
+      </div>
+      <div class="col" style="display:flex;align-items:end">
+        <button class="btn outline" id="dash-data-btn" style="margin-bottom:12px">📊 Ver Mercado</button>
+      </div>
+    </div>
+    <pre class="log" id="data-result" style="margin-top:12px">Busca un ticker y presiona "Ver Mercado"</pre>
+  </div>
+
+  <div class="card">
+    <h2>
+      Órdenes
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Ejecutar Órdenes</h3>
+          <p>Envía órdenes de compra o venta simuladas al broker activo. Yahoo Finance no ejecuta órdenes reales. Binance e Interactive Brokers tienen placeholders para integración real con HMAC e ib_insync.</p>
+          <a href="https://www.investopedia.com/terms/o/order.asp" target="_blank" rel="noopener">↗ Investopedia: Order Types</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row">
+      <div class="col">
+        <label>Ticker</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="ord-ticker" placeholder="Buscar ticker…" autocomplete="off">
+          <button class="clear-btn">&times;</button>
+          <div class="autocomplete-dropdown" id="ord-dropdown"></div>
+        </div>
+      </div>
+      <div class="col">
+        <label>Side</label>
+        <select id="ord-side">
+          <option value="BUY">BUY</option>
+          <option value="SELL">SELL</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Cantidad</label>
+        <input type="number" id="ord-qty" step="0.01" value="1">
+      </div>
+    </div>
+    <button class="btn green" id="ord-btn">Ejecutar Orden</button>
+  </div>
+</section>
+
+<!-- ══════════════════ ANALYSIS ══════════════════ -->
+<section id="tab-analysis" class="tab">
+
+  <div class="card">
+    <h2>
+      Análisis Técnico
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Análisis Técnico</h3>
+          <p>Evalúa acciones usando indicadores matemáticos sobre datos históricos de precio y volumen. Scalping para corto plazo (minutos) con EMA, RSI y Bollinger. Swing para largo plazo (días) con MACD, SMA 200 y Soportes/Resistencias.</p>
+          <a href="https://www.investopedia.com/terms/t/technicalanalysis.asp" target="_blank" rel="noopener">↗ Investopedia: Technical Analysis</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row">
+      <div class="col">
+        <label>
+          Ticker
+          <span class="info-wrap" style="display:inline-block;vertical-align:middle">
+            <span class="info-trigger" style="width:14px;height:14px;font-size:9px" title="Buscar">i</span>
+            <div class="info-popup">
+              <h3>Smart Search</h3>
+              <p>Escribe para buscar entre más de 50 tickers populares (SP500, crypto, índices). Usa flechas ↑↓ para navegar y Enter para seleccionar.</p>
+              <a href="https://www.investopedia.com/terms/s/sp500.asp" target="_blank" rel="noopener">↗ Investopedia: S&P 500</a>
+            </div>
+          </span>
+        </label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="an-ticker" placeholder="Ej: AAPL, MSFT, BTC-USD…" autocomplete="off">
+          <button class="clear-btn">&times;</button>
+          <div class="autocomplete-dropdown" id="an-dropdown"></div>
+        </div>
+      </div>
+      <div class="col">
+        <label>Estrategia <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Estrategia</h3><p>Scalping: señales rápidas en 1m-5m. Swing: tendencias en 1d.</p><a href="https://www.investopedia.com/terms/s/scalping.asp" target="_blank">↗ Leer más</a></div></span></label>
+        <select id="an-strategy">
+          <option value="scalping">Scalping (Corto Plazo)</option>
+          <option value="swing">Swing (Largo Plazo)</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Intervalo <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Timeframe</h3><p>1m/5m scalping · 15m/1h intradía · 1d swing</p><a href="https://www.investopedia.com/terms/t/timeframe.asp" target="_blank">↗ Leer más</a></div></span></label>
+        <select id="an-interval">
+          <option value="1m">1 minuto</option>
+          <option value="5m" selected>5 minutos</option>
+          <option value="15m">15 minutos</option>
+          <option value="1h">1 hora</option>
+          <option value="1d">1 día</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Periodos</label>
+        <input type="number" id="an-periods" value="100" min="20" max="500">
+      </div>
+    </div>
+    <button class="btn" id="an-btn">Analizar</button>
+  </div>
+
+  <div id="an-result" style="display:none"></div>
+
+  <div class="card" id="ai-assistant-card" style="display:none">
+    <h2>
+      🤖 Asistente de Trading
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Análisis Automático con IA</h3>
+          <p>Evalúa indicadores técnicos en tiempo real usando reglas de mercado. Genera recomendaciones de compra, venta o espera con nivel de confianza y razones detalladas. Ideal para aprender por qué se toma cada decisión.</p>
+        </div>
+      </span>
+    </h2>
+    <div id="ai-assistant-content" style="font-size:13px;color:var(--muted)">
+      <p>Seleccioná un ticker y ejecutá <strong>"Analizar"</strong> para ver el análisis del asistente debajo del gráfico.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Leyenda de Estrategias</h2>
+    <div class="row">
+      <div class="col">
+        <strong>Scalping</strong> (1m-5m)
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:var(--muted);line-height:1.8">
+          <li>EMA 9/21 crossover → ±35% confianza</li>
+          <li>RSI 14 (sobreventa &lt;30 / sobrecompra &gt;70) → ±25%</li>
+          <li>Bollinger Bands (20,2) → ±20%</li>
+        </ul>
+      </div>
+      <div class="col">
+        <strong>Swing</strong> (1d)
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:var(--muted);line-height:1.8">
+          <li>MACD crossover → ±40% confianza</li>
+          <li>SMA 200 → ±15% tendencia</li>
+          <li>Soporte/Resistencia histórico → ±20%</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ ALERTS ══════════════════ -->
+<section id="tab-alerts" class="tab">
+
+  <div class="card">
+    <h2>
+      Nueva Alerta
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Alertas Automáticas</h3>
+          <p>Configura condiciones para recibir notificaciones cuando se cumplan. Pueden enviarse por WhatsApp (Twilio) cuando se detecte una señal de compra o venta.</p>
+          <a href="https://www.twilio.com/docs/whatsapp" target="_blank" rel="noopener">↗ Twilio WhatsApp API</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row">
+      <div class="col">
+        <label>Ticker</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="al-ticker" placeholder="Buscar ticker…" autocomplete="off">
+          <button class="clear-btn">&times;</button>
+          <div class="autocomplete-dropdown" id="al-dropdown"></div>
+        </div>
+      </div>
+      <div class="col">
+        <label>Estrategia</label>
+        <select id="al-strategy">
+          <option value="scalping">Scalping</option>
+          <option value="swing">Swing</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Condición</label>
+        <select id="al-condition">
+          <option value="crossover">Crossover EMA/MACD</option>
+          <option value="rsi_oversold">RSI Sobrevendido</option>
+          <option value="rsi_overbought">RSI Sobrecomprado</option>
+          <option value="bb_touch">Toque de Banda</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Umbral (opcional)</label>
+        <input type="number" id="al-threshold" step="0.01" placeholder="Ej: 150.00">
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)">
+        <input type="checkbox" id="al-whatsapp"> Notificar por WhatsApp
+      </label>
+      <button class="btn" id="al-btn">Crear Alerta</button>
+      <button class="btn outline" id="al-test-wa">Probar WhatsApp</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Alertas Activas</h2>
+    <table>
+      <thead><tr><th>Ticker</th><th>Estrategia</th><th>Condición</th><th>Notificación</th><th></th></tr></thead>
+      <tbody id="alerts-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ OPCIONES ══════════════════ -->
+<section id="tab-options" class="tab">
+
+  <!-- ── Background Analyzer ── -->
+  <div class="card">
+    <h2>
+      Analizador en Segundo Plano
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Análisis Automático en Background</h3>
+          <p>Ejecuta análisis periódicos sobre una lista de tickers sin intervención manual. Cuando detecta una señal de compra/venta con suficiente confianza, puede enviar una alerta por WhatsApp. Los resultados se acumulan para revisión.</p>
+          <a href="https://www.investopedia.com/terms/a/automated-trading-system.asp" target="_blank" rel="noopener">↗ Investopedia: Automated Trading</a>
+        </div>
+      </span>
+    </h2>
+
+    <div class="row" style="align-items:center;gap:16px;margin-bottom:16px">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="bg-toggle">
+        <span class="toggle-slider"></span>
+        <span id="bg-status-label" style="font-size:14px;font-weight:600;color:var(--muted)">Detenido</span>
+      </label>
+      <span style="font-size:12px;color:var(--muted)" id="bg-last-run">Última ejecución: —</span>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <label>Tickers a analizar (separados por coma, vacío = todos los populares)</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="bg-tickers" placeholder="AAPL,MSFT,TSLA,BTC-USD" value="AAPL,MSFT,TSLA" autocomplete="off">
+          <button class="clear-btn">&times;</button>
+          <div class="autocomplete-dropdown" id="bg-dropdown"></div>
+        </div>
+      </div>
+      <div class="col">
+        <label>Estrategia</label>
+        <select id="bg-strategy">
+          <option value="scalping">Scalping (Corto Plazo)</option>
+          <option value="swing">Swing (Largo Plazo)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Intervalo de velas</label>
+        <select id="bg-interval">
+          <option value="1m">1 minuto</option>
+          <option value="5m" selected>5 minutos</option>
+          <option value="15m">15 minutos</option>
+          <option value="1h">1 hora</option>
+          <option value="1d">1 día</option>
+        </select>
+      </div>
+      <div class="col">
+        <label>Periodos por análisis</label>
+        <input type="number" id="bg-periods" value="100" min="20" max="500">
+      </div>
+      <div class="col">
+        <label>Confianza mínima para alertar</label>
+        <input type="number" id="bg-min-conf" value="0.2" min="0" max="1" step="0.05">
+      </div>
+      <div class="col">
+        <label>Intervalo entre ciclos (segundos)</label>
+        <input type="number" id="bg-every" value="300" min="30" max="3600">
+      </div>
+    </div>
+    <div class="row" style="align-items:center;gap:16px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)">
+        <input type="checkbox" id="bg-whatsapp"> Alertas por WhatsApp
+      </label>
+      <button class="btn" id="bg-apply-btn" style="margin-bottom:12px">Aplicar Configuración</button>
+    </div>
+  </div>
+
+  <div class="card" id="bg-results-card" style="display:none">
+    <h2>Resultados del Analizador en Segundo Plano</h2>
+    <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">
+      Mostrando las últimas <span id="bg-results-count">0</span> ejecuciones
+    </div>
+    <pre class="log" id="bg-results" style="max-height:400px">Sin resultados aún</pre>
+  </div>
+
+  <!-- ── Prediction Stats ── -->
+  <div class="card" id="pred-stats-card">
+    <h2>
+      Estadísticas de Predicciones
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Precisión Predictiva</h3>
+          <p>Cada vez que el analizador detecta una señal BUY/SELL, se almacena como predicción en la base de datos. Cuando el precio se mueve, se resuelve automáticamente comparando la dirección predicha vs. el cambio real.</p>
+          <a href="https://www.investopedia.com/terms/b/backtesting.asp" target="_blank" rel="noopener">↗ Investopedia: Backtesting</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row" id="pred-stats-grid" style="gap:8px;margin-bottom:12px">
+      <div class="stat-mini"><span class="stat-mini-val" id="pred-total">0</span><span class="stat-mini-lbl">Total</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="pred-resolved">0</span><span class="stat-mini-lbl">Resueltas</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="pred-correct">0</span><span class="stat-mini-lbl">Acertadas</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="pred-pending">0</span><span class="stat-mini-lbl">Pendientes</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="pred-accuracy" style="font-size:28px">0%</span><span class="stat-mini-lbl">Precisión</span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">
+        Filtro ticker:
+        <input type="text" id="pred-filter" placeholder="AAPL" style="width:100px;margin:0" value="">
+      </label>
+      <button class="btn outline sm" id="pred-filter-btn">Filtrar</button>
+      <button class="btn outline sm" id="pred-resolve-btn">Resolver Pendientes</button>
+    </div>
+  </div>
+
+  <div class="card" id="pred-list-card" style="display:none">
+    <h2>Historial de Predicciones</h2>
+    <table>
+      <thead><tr>
+        <th>Ticker</th><th>Señal</th><th>Confianza</th><th>Precio</th><th>Resultado</th><th>Cambio</th><th>Fecha</th>
+      </tr></thead>
+      <tbody id="pred-tbody"></tbody>
+    </table>
+    <pre class="log" id="pred-raw" style="display:none"></pre>
+  </div>
+
+  <!-- ── WhatsApp Config (Self-Hosted Gateway) ── -->
+  <div class="card" id="wa-config-card">
+    <h2>
+      🤖 WhatsApp Gateway (Gratuito)
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>WhatsApp Web Auto-Hosteado</h3>
+          <p>Usa un contenedor Node.js con <strong>Baileys</strong> para emular WhatsApp Web. Sin costos, sin Twilio. Escaneá el código QR con tu WhatsApp para conectar. La sesión se guarda permanentemente.</p>
+          <a href="https://github.com/WhiskeySockets/Baileys" target="_blank" rel="noopener">↗ GitHub: Baileys</a>
+        </div>
+      </span>
+    </h2>
+
+    <!-- QR + Status -->
+    <div id="wa-qr-section" style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <div id="wa-qr-container" style="display:none;text-align:center;background:#fff;border-radius:8px;padding:8px;width:180px">
+        <img id="wa-qr-img" style="width:160px;height:160px;image-rendering:pixelated" alt="QR">
+        <div style="font-size:10px;color:#666;margin-top:4px">Escaneá con WhatsApp</div>
+      </div>
+      <div id="wa-connected-info" style="display:none;font-size:13px;color:var(--green)">
+        ✅ Conectado como <span id="wa-connected-phone">—</span>
+      </div>
+      <div id="wa-disconnected-info" style="font-size:13px;color:var(--muted)">
+        ⏳ Esperando conexión...
+      </div>
+      <button class="btn sm outline" id="wa-refresh-qr-btn" title="Actualizar QR">⟳ QR</button>
+    </div>
+
+    <!-- Phone number config -->
+    <div class="row" style="align-items:end;gap:16px">
+      <div class="col" style="flex:2">
+        <label>Mi número (para recibir alertas)</label>
+        <input type="text" id="wa-phone" placeholder="Ej: 521234567890">
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Solo dígitos, con código de país. Sin + ni whatsapp:</div>
+      </div>
+      <button class="btn" id="wa-save-btn" style="margin-bottom:12px">Guardar</button>
+      <span id="wa-status" style="font-size:13px;color:var(--muted);margin-bottom:12px"></span>
+    </div>
+  </div>
+
+  <!-- ── Broker Config ── -->
+  <div class="card">
+    <h2>
+      Configuración del Broker
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Broker Activo</h3>
+          <p>Selecciona el broker que usará el sistema. Yahoo Finance es gratuito. Binance conecta al testnet. Interactive Brokers requiere credenciales reales.</p>
+          <a href="https://www.investopedia.com/terms/b/broker.asp" target="_blank" rel="noopener">↗ Investopedia: ¿Qué es un Broker?</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row" style="align-items:end">
+      <div class="col" style="min-width:200px">
+        <label>Broker Activo</label>
+        <select id="opt-broker-select"></select>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:13px;color:var(--muted);margin-bottom:12px">
+        <input type="checkbox" id="opt-sandbox" checked> Sandbox
+      </label>
+      <button class="btn" id="opt-switch-btn" style="margin-bottom:12px">Conectar</button>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+        Estado: <span id="opt-broker-status">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Debug Config ── -->
+  <div class="card">
+    <h2>
+      Depuración
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Trazabilidad del Sistema</h3>
+          <p>Activa o desactiva el registro detallado de requests, cambios de broker, evaluaciones de estrategia y errores.</p>
+          <a href="https://fastapi.tiangolo.com/tutorial/middleware/" target="_blank" rel="noopener">↗ FastAPI Middleware Docs</a>
+        </div>
+      </span>
+    </h2>
+    <div class="row" style="align-items:center;gap:16px">
+      <label class="toggle-wrap">
+        <input type="checkbox" id="opt-debug-toggle">
+        <span class="toggle-slider"></span>
+        <span id="opt-debug-label" style="font-size:14px;font-weight:600;color:var(--muted)">Desactivado</span>
+      </label>
+    </div>
+  </div>
+
+</section>
+
+<!-- ══════════════════ DEBUG ══════════════════ -->
+<section id="tab-debug" class="tab">
+
+  <div class="card">
+    <div class="row" style="align-items:center;justify-content:space-between">
+      <div>
+        <h2 style="margin:0;display:flex;align-items:center;gap:8px">
+          Dashboard de Depuración
+          <span class="info-wrap">
+            <span class="info-trigger" title="¿Qué es esto?">i</span>
+            <div class="info-popup">
+              <h3>Trazabilidad del Sistema</h3>
+              <p>Registra cada request HTTP, cambio de broker, evaluación de estrategia y error. Útil para auditar señales, medir tiempos de respuesta y diagnosticar fallos. Los logs se mantienen en memoria (máx 500 entradas). Los controles de activación están en Opciones.</p>
+              <a href="https://fastapi.tiangolo.com/tutorial/middleware/" target="_blank" rel="noopener">↗ FastAPI Middleware Docs</a>
+            </div>
+          </span>
+        </h2>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">
+          Broker: <span id="debug-broker">—</span>
+          · Estado: <span id="debug-broker-status">—</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="debug-filter" style="width:auto;margin:0">
+          <option value="all">Todo</option>
+          <option value="requests">Requests</option>
+          <option value="errors">Errores</option>
+          <option value="broker">Broker</option>
+          <option value="strategy">Estrategia</option>
+        </select>
+        <button class="btn outline sm" id="debug-refresh">⟳</button>
+        <button class="btn red sm" id="debug-clear">Limpiar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="indicators" id="debug-stats"></div>
+
+  <div id="debug-panel-requests" class="card debug-panel">
+    <h2>Requests Recientes</h2>
+    <pre class="log" id="debug-requests">—</pre>
+  </div>
+  <div id="debug-panel-errors" class="card debug-panel">
+    <h2>Errores</h2>
+    <pre class="log" id="debug-errors">—</pre>
+  </div>
+  <div id="debug-panel-broker" class="card debug-panel">
+    <h2>Eventos de Broker</h2>
+    <pre class="log" id="debug-events">—</pre>
+  </div>
+  <div id="debug-panel-strategy" class="card debug-panel">
+    <h2>Evaluaciones de Estrategia</h2>
+    <pre class="log" id="debug-strategy">—</pre>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════ MARKET DATA MODAL ══════════════════ -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div id="modal-body">
+      <button class="close" onclick="document.getElementById('modal-overlay').classList.remove('show')">&times;</button>
+      <h2>Selecciona un ticker</h2>
+      <div class="subtitle">Usa el campo de búsqueda para ver datos de mercado</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ EVENT LOG ══════════════════ -->
+<div style="position:fixed;bottom:0;right:0;width:400px;max-height:200px;background:var(--card);border:1px solid var(--border);border-radius:8px 0 0 0;padding:8px;z-index:100;font-size:12px">
+  <div style="color:var(--muted);margin-bottom:4px">Event Log</div>
+  <div id="log-container" style="overflow-y:auto;max-height:150px"></div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
