@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+import polars as pl
 
 from app.core.strategies import (
     _find_levels,
@@ -11,25 +11,28 @@ from app.core.strategies import (
 
 def _df_from(prices):
     n = len(prices)
-    return pd.DataFrame({
+    return pl.DataFrame({
+        "timestamp": [f"2024-01-{i+1:02d}" for i in range(n)],
         "Close": prices,
         "High": [p * 1.02 for p in prices],
         "Low": [p * 0.98 for p in prices],
         "Open": prices,
         "Volume": [1000000] * n,
-    }, index=pd.date_range("2024-01-01", periods=n, freq="D"))
+    })
 
 
 def test_scalping_insufficient_data():
-    data = {"Close": [100] * 10, "High": [105] * 10, "Low": [95] * 10, "Open": [100] * 10, "Volume": [1000000] * 10}
-    df = pd.DataFrame(data)
+    df = pl.DataFrame({
+        "Close": [100] * 10, "High": [105] * 10, "Low": [95] * 10,
+        "Open": [100] * 10, "Volume": [1000000] * 10,
+    })
     r = scalping_signals(df)
     assert r["signal"] == "NEUTRAL"
     assert r["confidence"] == 0.0
 
 
 def test_scalping_empty():
-    r = scalping_signals(pd.DataFrame())
+    r = scalping_signals(pl.DataFrame())
     assert r["signal"] == "NEUTRAL"
 
 
@@ -52,15 +55,17 @@ def test_scalping_rsi_oversold():
 
 
 def test_swing_insufficient_data():
-    data = {"Close": [100] * 50, "High": [105] * 50, "Low": [95] * 50, "Open": [100] * 50, "Volume": [1000000] * 50}
-    df = pd.DataFrame(data)
+    df = pl.DataFrame({
+        "Close": [100] * 50, "High": [105] * 50, "Low": [95] * 50,
+        "Open": [100] * 50, "Volume": [1000000] * 50,
+    })
     r = swing_signals(df)
     assert r["signal"] == "NEUTRAL"
     assert r["confidence"] == 0.0
 
 
 def test_swing_empty():
-    r = swing_signals(pd.DataFrame())
+    r = swing_signals(pl.DataFrame())
     assert r["signal"] == "NEUTRAL"
 
 
@@ -74,7 +79,7 @@ def test_swing_returns_structure():
 
 
 def test_compute_chart_data_empty():
-    r = compute_chart_data(pd.DataFrame())
+    r = compute_chart_data(pl.DataFrame())
     assert isinstance(r, dict)
     assert r["timestamp"] == []
 

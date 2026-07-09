@@ -137,99 +137,15 @@ function connectWebSocket() {
   ws.onerror = () => ws?.close();
 }
 
-/* ── Auth ──────────────────────────────────────── */
-function getToken() { return localStorage.getItem('token'); }
-function setToken(t) { localStorage.setItem('token', t); }
-function clearToken() { localStorage.removeItem('token'); }
+/* ── Auth (deshabilitado temporalmente) ──────────── */
 
 async function api(method, path, body) {
   const headers = { 'Content-Type': 'application/json' };
-  const token = getToken();
-  if (token) headers['Authorization'] = 'Bearer ' + token;
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(API + path, opts);
-  if (res.status === 401 && path !== '/api/auth/login') {
-    clearToken(); showAuthScreen();
-    return null;
-  }
   return res.json();
 }
-
-function showAuthScreen() {
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-header').style.display = 'none';
-  document.querySelector('main').style.display = 'none';
-}
-
-function showApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app-header').style.display = 'flex';
-  document.querySelector('main').style.display = 'block';
-  connectWebSocket();
-}
-
-function showRegister() {
-  document.getElementById('login-form').style.display = 'none';
-  document.getElementById('register-form').style.display = 'block';
-  document.getElementById('register-error').textContent = '';
-}
-function showLogin() {
-  document.getElementById('register-form').style.display = 'none';
-  document.getElementById('login-form').style.display = 'block';
-  document.getElementById('login-error').textContent = '';
-}
-
-async function handleLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  const err = document.getElementById('login-error');
-  if (!username || !password) { err.textContent = 'Completá todos los campos'; return; }
-  err.textContent = '';
-  const res = await fetch(API + '/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) { err.textContent = data.detail || 'Error al iniciar sesión'; return; }
-  setToken(data.access_token);
-  showApp();
-  document.getElementById('user-display').textContent = username;
-  initApp();
-}
-
-async function handleRegister() {
-  const username = document.getElementById('register-username').value.trim();
-  const email = document.getElementById('register-email').value.trim();
-  const password = document.getElementById('register-password').value;
-  const err = document.getElementById('register-error');
-  if (!username || !email || !password) { err.textContent = 'Completá todos los campos'; return; }
-  err.textContent = '';
-  const res = await fetch(API + '/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, email, password }),
-  });
-  const data = await res.json();
-  if (!res.ok) { err.textContent = data.detail || 'Error al registrarse'; return; }
-  setToken(data.access_token);
-  showApp();
-  document.getElementById('user-display').textContent = username;
-  initApp();
-}
-
-document.getElementById('login-btn').addEventListener('click', handleLogin);
-document.getElementById('register-btn').addEventListener('click', handleRegister);
-document.getElementById('logout-btn').addEventListener('click', () => {
-  clearToken(); showAuthScreen();
-});
-['login-username','login-password'].forEach(id =>
-  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); })
-);
-['register-username','register-email','register-password'].forEach(id =>
-  document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); })
-);
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -855,16 +771,38 @@ function showAnalysisResult(r) {
         <ul style="margin:8px 0 0 16px">${reasonsHtml}</ul>
       </div>
 
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn green" onclick="placeOrderTicker('${ticker}','BUY')">Comprar ${ticker}</button>
+        <button class="btn red" onclick="placeOrderTicker('${ticker}','SELL')">Vender ${ticker}</button>
+      </div>
+
       <div class="chart-section" style="margin-top:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <strong style="font-size:13px">Gráfico de Precio e Indicadores</strong>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
               Periodos:
               <select id="chart-periods" style="width:80px;margin:0;padding:4px 8px;font-size:12px">
                 ${[30,60,100,200,300,500].map(p => `<option value="${p}" ${p===100?'selected':''}>${p}</option>`).join('')}
               </select>
             </label>
+            <div style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted)" id="indicator-toggles">
+              <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+                <input type="checkbox" data-series="bb" checked> BB
+              </label>
+              <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+                <input type="checkbox" data-series="ema9" checked> EMA9
+              </label>
+              <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+                <input type="checkbox" data-series="ema21" checked> EMA21
+              </label>
+              <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+                <input type="checkbox" data-series="rsi" checked> RSI
+              </label>
+              <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+                <input type="checkbox" data-series="macd" checked> MACD
+              </label>
+            </div>
             <button class="btn outline sm" id="chart-refresh-btn" style="padding:4px 10px;font-size:12px;margin:0">⟳</button>
           </div>
         </div>
@@ -876,19 +814,29 @@ function showAnalysisResult(r) {
     </div>
   `;
   initInfoPopups();
+  initIndicatorToggles(ticker, strategy, interval);
+
+  const getVisible = () => {
+    const v = {};
+    document.querySelectorAll('#indicator-toggles input[type="checkbox"]').forEach(cb => {
+      v[cb.dataset.series] = cb.checked;
+    });
+    return v;
+  };
 
   // Period selector listener
   const sel = document.getElementById('chart-periods');
   const btn = document.getElementById('chart-refresh-btn');
+  const doFetch = () => fetchChart(ticker, strategy, interval, parseInt(sel?.value || 100), getVisible());
   if (sel) {
-    sel.onchange = () => fetchChart(ticker, strategy, interval, parseInt(sel.value));
+    sel.onchange = doFetch;
   }
   if (btn) {
-    btn.onclick = () => fetchChart(ticker, strategy, interval, parseInt(sel?.value || 100));
+    btn.onclick = doFetch;
   }
 
   // Fetch chart data and draw
-  fetchChart(ticker, strategy, interval, parseInt(sel?.value || 100));
+  doFetch();
 
   // Show AI assistant card
   const aiCard = document.getElementById('ai-assistant-card');
@@ -939,14 +887,14 @@ function addPanel(container, id, height) {
   return document.getElementById(id);
 }
 
-async function fetchChart(ticker, strategy, interval, periods) {
+async function fetchChart(ticker, strategy, interval, periods, visible) {
   try {
     const [data, analysis] = await Promise.all([
       api('GET', `/api/analysis/chart/${ticker}?strategy=${strategy}&interval=${interval}&periods=${periods}`),
       api('POST', `/api/analysis/technical-analysis?ticker=${encodeURIComponent(ticker)}&strategy=${strategy}&interval=${interval}&periods=${periods}`).catch(() => null),
     ]);
     document.getElementById('chart-loading').style.display = 'none';
-    drawChart(data.series, strategy);
+    drawChart(data.series, strategy, visible);
     const analysisContainer = document.getElementById('chart-analysis');
     if (analysisContainer && analysis) {
       renderTechnicalAnalysis(analysisContainer, analysis);
@@ -956,15 +904,16 @@ async function fetchChart(ticker, strategy, interval, periods) {
   }
 }
 
-function drawChart(series, strategy) {
+function drawChart(series, strategy, visible) {
   const pan = document.getElementById('chart-panels');
   if (!pan || !series || !series.timestamp?.length) return;
 
   destroyCharts();
-  // Remove old panels (keep loading overlay)
   Array.from(pan.children).forEach(c => {
     if (c.id !== 'chart-loading') c.remove();
   });
+
+  visible = visible || { bb: true, ema9: true, ema21: true, rsi: true, macd: true };
 
   const labels = series.timestamp.map(t => {
     const d = new Date(t);
@@ -974,96 +923,92 @@ function drawChart(series, strategy) {
   const { txt, grid, price: pCol, ema9, ema21, bb } = CHART_COLORS;
 
   // ── Panel 1: Price + EMAs + BB ──
-    const canvas1 = addPanel(pan, 'chart-panel-price', 200);
+  const canvas1 = addPanel(pan, 'chart-panel-price', 200);
   const bbUpper = series.bb_upper?.map(v => v ?? null) || [];
   const bbLower = series.bb_lower?.map(v => v ?? null) || [];
+  const hasBb = visible.bb && bbUpper.some(v => v != null);
+
+  const panel1Datasets = [];
+  if (hasBb) {
+    panel1Datasets.push({
+      label: 'BB Superior', data: bbUpper,
+      borderColor: bb, backgroundColor: bb,
+      borderWidth: 1, pointRadius: 0, fill: false, tension: 0.2,
+    }, {
+      label: 'BB Inferior', data: bbLower,
+      borderColor: bb, backgroundColor: bb,
+      borderWidth: 1, pointRadius: 0, fill: '-1', tension: 0.2,
+    });
+  }
+  panel1Datasets.push({
+    label: 'Precio', data: series.close || [],
+    borderColor: pCol, borderWidth: 2, pointRadius: 0, fill: false, tension: 0.2,
+  });
+  if (visible.ema9) {
+    panel1Datasets.push({
+      label: 'EMA 9', data: series.ema_9 || [],
+      borderColor: ema9, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2,
+    });
+  }
+  if (visible.ema21) {
+    panel1Datasets.push({
+      label: 'EMA 21', data: series.ema_21 || [],
+      borderColor: ema21, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2,
+    });
+  }
 
   const panel1 = new Chart(canvas1, {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'BB Superior',
-          data: bbUpper,
-          borderColor: bb, backgroundColor: bb,
-          borderWidth: 1, pointRadius: 0, fill: false, tension: 0.2,
-        },
-        {
-          label: 'BB Inferior',
-          data: bbLower,
-          borderColor: bb, backgroundColor: bb,
-          borderWidth: 1, pointRadius: 0, fill: '-1', tension: 0.2,
-        },
-        {
-          label: 'Precio',
-          data: series.close || [],
-          borderColor: pCol, borderWidth: 2, pointRadius: 0, fill: false, tension: 0.2,
-        },
-        {
-          label: 'EMA 9',
-          data: series.ema_9 || [],
-          borderColor: ema9, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2,
-        },
-        {
-          label: 'EMA 21',
-          data: series.ema_21 || [],
-          borderColor: ema21, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2,
-        },
-      ].filter(d => d.data.some(v => v != null)),
-    },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        animation: { duration: 300 },
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { position: 'top', labels: { color: txt, boxWidth: 12, padding: 6, font: { size: 10 } } },
-          tooltip: { ...CHART_TOOLTIP, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) : null } },
-          zoom: { pan: { enabled: true, mode: 'x' }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' } },
-        },
-        scales: {
-          x: CHART_SCALES_X,
-          y: { position: 'right', ticks: { color: txt, font: { size: 9 }, callback: v => '$' + v.toFixed(0) }, grid: { color: grid } },
-        },
+    data: { labels, datasets: panel1Datasets.filter(d => d.data.some(v => v != null)) },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 300 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { color: txt, boxWidth: 12, padding: 6, font: { size: 10 } } },
+        tooltip: { ...CHART_TOOLTIP, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': $' + ctx.parsed.y.toFixed(2) : null } },
+        zoom: { pan: { enabled: true, mode: 'x' }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' } },
       },
+      scales: {
+        x: CHART_SCALES_X,
+        y: { position: 'right', ticks: { color: txt, font: { size: 9 }, callback: v => '$' + v.toFixed(0) }, grid: { color: grid } },
+      },
+    },
   });
   chartInstances.push(panel1);
 
   // ── Panel 2: RSI ──
+  if (visible.rsi) {
     const canvas2 = addPanel(pan, 'chart-panel-rsi', 90);
-  const rsiData = series.rsi_14 || [];
-
-  const panel2 = new Chart(canvas2, {
-    type: 'line',
-    data: {
-      labels: labels.slice(labels.length - rsiData.length),
-      datasets: [
-        {
-          label: 'Sobrecompra (70)',
-          data: rsiData.map(() => 70),
-          borderColor: 'rgba(248,81,73,0.2)', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false,
-        },
-        {
-          label: 'Sobreventa (30)',
-          data: rsiData.map(() => 30),
-          borderColor: 'rgba(63,185,80,0.2)', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false,
-        },
-        {
-          label: 'RSI 14',
-          data: rsiData,
-          borderColor: pCol,
-          backgroundColor: ctx => {
-            const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 90);
-            g.addColorStop(0, 'rgba(248,81,73,0.08)');
-            g.addColorStop(0.3, 'rgba(201,217,217,0.02)');
-            g.addColorStop(0.7, 'rgba(201,217,217,0.02)');
-            g.addColorStop(1, 'rgba(63,185,80,0.08)');
-            return g;
+    const rsiData = series.rsi_14 || [];
+    const panel2 = new Chart(canvas2, {
+      type: 'line',
+      data: {
+        labels: labels.slice(labels.length - rsiData.length),
+        datasets: [
+          {
+            label: 'Sobrecompra (70)', data: rsiData.map(() => 70),
+            borderColor: 'rgba(248,81,73,0.2)', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false,
           },
-          borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3,
-        },
-      ],
-    },
+          {
+            label: 'Sobreventa (30)', data: rsiData.map(() => 30),
+            borderColor: 'rgba(63,185,80,0.2)', borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false,
+          },
+          {
+            label: 'RSI 14', data: rsiData,
+            borderColor: pCol,
+            backgroundColor: ctx => {
+              const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 90);
+              g.addColorStop(0, 'rgba(248,81,73,0.08)');
+              g.addColorStop(0.3, 'rgba(201,217,217,0.02)');
+              g.addColorStop(0.7, 'rgba(201,217,217,0.02)');
+              g.addColorStop(1, 'rgba(63,185,80,0.08)');
+              return g;
+            },
+            borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3,
+          },
+        ],
+      },
       options: {
         responsive: true, maintainAspectRatio: false,
         animation: { duration: 300 },
@@ -1087,9 +1032,7 @@ function drawChart(series, strategy) {
         },
         scales: {
           x: { ...CHART_SCALES_X, ticks: { ...CHART_SCALES_X.ticks, maxTicksLimit: 6 } },
-          y: {
-            min: 0, max: 100, position: 'right',
-            ticks: { color: txt, font: { size: 9 } },
+          y: { min: 0, max: 100, position: 'right', ticks: { color: txt, font: { size: 9 } },
             grid: {
               color: ctx => {
                 const v = ctx.tick.value;
@@ -1102,54 +1045,42 @@ function drawChart(series, strategy) {
           },
         },
       },
-  });
-  chartInstances.push(panel2);
+    });
+    chartInstances.push(panel2);
+  }
 
-  // ── Panel 3: MACD (solo swing) ──
-  if (strategy === 'swing' && series.macd?.some(v => v != null)) {
+  // ── Panel 3: MACD ──
+  if (visible.macd && strategy === 'swing' && series.macd?.some(v => v != null)) {
     const canvas3 = addPanel(pan, 'chart-panel-macd', 80);
     const macdData = series.macd || [];
     const signalData = series.macd_signal || [];
     const histData = series.macd_histogram || [];
     const histColors = histData.map(v => v >= 0 ? 'rgba(63,185,80,0.5)' : 'rgba(248,81,73,0.5)');
     const macdLabels = labels.slice(labels.length - macdData.length);
-
     const panel3 = new Chart(canvas3, {
       type: 'bar',
       data: {
         labels: macdLabels,
         datasets: [
-          {
-            label: 'MACD', data: macdData,
-            type: 'line', borderColor: ema9, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2,
-            order: 1,
-          },
-          {
-            label: 'Señal', data: signalData,
-            type: 'line', borderColor: ema21, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2,
-            order: 1,
-          },
-          {
-            label: 'Histograma', data: histData,
-            backgroundColor: histColors, borderColor: histColors, borderWidth: 1, barPercentage: 0.6,
-            order: 2,
-          },
+          { label: 'MACD', data: macdData, type: 'line', borderColor: ema9, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2, order: 1 },
+          { label: 'Señal', data: signalData, type: 'line', borderColor: ema21, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.2, order: 1 },
+          { label: 'Histograma', data: histData, backgroundColor: histColors, borderColor: histColors, borderWidth: 1, barPercentage: 0.6, order: 2 },
         ],
       },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          animation: { duration: 300 },
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { position: 'top', labels: { color: txt, boxWidth: 10, padding: 4, font: { size: 9 } } },
-            tooltip: { ...CHART_TOOLTIP, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) : null } },
-            zoom: { pan: { enabled: true, mode: 'x' }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' } },
-          },
-          scales: {
-            x: { ...CHART_SCALES_X, ticks: { ...CHART_SCALES_X.ticks, maxTicksLimit: 6 } },
-            y: { position: 'right', ticks: { color: txt, font: { size: 9 } }, grid: { color: grid } },
-          },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { color: txt, boxWidth: 10, padding: 4, font: { size: 9 } } },
+          tooltip: { ...CHART_TOOLTIP, callbacks: { label: ctx => ctx.parsed.y != null ? ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) : null } },
+          zoom: { pan: { enabled: true, mode: 'x' }, zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' } },
         },
+        scales: {
+          x: { ...CHART_SCALES_X, ticks: { ...CHART_SCALES_X.ticks, maxTicksLimit: 6 } },
+          y: { position: 'right', ticks: { color: txt, font: { size: 9 } }, grid: { color: grid } },
+        },
+      },
     });
     chartInstances.push(panel3);
   }
@@ -1158,6 +1089,108 @@ function drawChart(series, strategy) {
 // ════════════════════════════════════════════════════════════════
 //  ORDER
 // ════════════════════════════════════════════════════════════════
+
+async function placeOrderTicker(ticker, side) {
+  const qty = prompt(`Cantidad para ${side} ${ticker}:`, '1');
+  if (!qty) return;
+  const result = await api('POST', '/api/analysis/order', { ticker, side, quantity: parseFloat(qty) });
+  addLog(`[ORDER] ${ticker} ${side} ${qty}: ${result.status}`, result.error ? 'err' : 'ok');
+}
+
+function initIndicatorToggles(ticker, strategy, interval) {
+  const toggles = document.querySelectorAll('#indicator-toggles input[type="checkbox"]');
+  const getVisible = () => {
+    const v = {};
+    toggles.forEach(cb => { v[cb.dataset.series] = cb.checked; });
+    return v;
+  };
+  toggles.forEach(cb => {
+    if (cb._handler) cb.removeEventListener('change', cb._handler);
+    cb._handler = () => {
+      const periods = parseInt(document.getElementById('chart-periods')?.value) || 100;
+      fetchChart(ticker, strategy, interval, periods, getVisible());
+    };
+    cb.addEventListener('change', cb._handler);
+  });
+}
+
+// ── Top Ranking ───────────────────────────────────────────
+
+async function loadTopRanking() {
+  const strategy = document.getElementById('tr-strategy').value;
+  const interval = document.getElementById('tr-interval').value;
+  const list = document.getElementById('tr-list');
+  const loading = document.getElementById('tr-loading');
+  const btn = document.getElementById('tr-refresh-btn');
+
+  const tickersParam = POPULAR_TICKERS.map(t => t.sym).join(',');
+  const url = `/api/analysis/top-ranking?strategy=${strategy}&interval=${interval}&periods=100&tickers=${encodeURIComponent(tickersParam)}`;
+
+  loading.style.display = 'block';
+  list.innerHTML = '';
+  btn.disabled = true;
+
+  try {
+    const data = await api('GET', url);
+    const rankings = data.rankings || [];
+    if (!rankings.length) {
+      list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted)">Sin señales activas</div>';
+      return;
+    }
+    list.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">
+      ${rankings.map((r, i) => {
+        const isBuy = r.signal === 'BUY';
+        const isSell = r.signal === 'SELL';
+        const color = isBuy ? 'var(--green)' : isSell ? 'var(--red)' : 'var(--muted)';
+        const pct = (r.confidence * 100).toFixed(0);
+        const reasons = (r.reasons || []).slice(0, 2).join(' · ');
+        return `<div class="tr-item" data-ticker="${r.ticker}" data-strategy="${strategy}" data-interval="${interval}" style="background:var(--bg);border-radius:8px;border:1px solid var(--border);padding:12px;cursor:pointer;transition:.15s;position:relative">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div>
+              <strong style="font-size:16px;color:var(--text)">${r.ticker}</strong>
+              <span style="font-size:11px;color:var(--muted);margin-left:6px">#${i+1}</span>
+            </div>
+            <div style="font-size:20px;font-weight:700;color:${color}">${r.signal}</div>
+          </div>
+          <div style="height:4px;background:var(--card);border-radius:2px;margin-bottom:6px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:2px;transition:width .3s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+            <span>${r.price != null ? '$' + r.price : '—'}</span>
+            <span>${pct}% confianza</span>
+          </div>
+          ${reasons ? `<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.3">${reasons}</div>` : ''}
+          <div style="display:flex;gap:4px;margin-top:8px">
+            <button class="btn green sm" style="flex:1;padding:4px;font-size:11px" onclick="event.stopPropagation();placeOrderTicker('${r.ticker}','BUY')">Comprar</button>
+            <button class="btn red sm" style="flex:1;padding:4px;font-size:11px" onclick="event.stopPropagation();placeOrderTicker('${r.ticker}','SELL')">Vender</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+
+    // Click on a ranking item → run analysis
+    list.querySelectorAll('.tr-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const ticker = el.dataset.ticker;
+        const strat = el.dataset.strategy;
+        const intv = el.dataset.interval;
+        document.getElementById('an-ticker').value = ticker;
+        document.getElementById('an-strategy').value = strat;
+        document.getElementById('an-interval').value = intv;
+        // Trigger autocomplete clear
+        const ac = document.getElementById('an-ticker');
+        ac.dispatchEvent(new Event('input'));
+        runAnalysis();
+        ac.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  } catch (e) {
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--red)">Error: ${e.message}</div>`;
+  } finally {
+    loading.style.display = 'none';
+    btn.disabled = false;
+  }
+}
 
 async function placeOrder() {
   const ticker = document.getElementById('ord-ticker').value.trim().toUpperCase();
@@ -1540,6 +1573,12 @@ function initApp() {
   createAutocomplete('al-ticker', 'al-dropdown');
   createAutocomplete('bg-tickers', 'bg-dropdown', null, true);
 
+  // ── Top Ranking ──
+  loadTopRanking();
+  document.getElementById('tr-refresh-btn').addEventListener('click', loadTopRanking);
+  document.getElementById('tr-strategy').addEventListener('change', loadTopRanking);
+  document.getElementById('tr-interval').addEventListener('change', loadTopRanking);
+
   document.getElementById('dash-data-btn').addEventListener('click', getData);
   document.getElementById('an-btn').addEventListener('click', runAnalysis);
   document.getElementById('ord-btn').addEventListener('click', placeOrder);
@@ -1579,24 +1618,8 @@ function initApp() {
 
   // ── Info popups ──
   initInfoPopups();
-});
-
-// Check auth on load
-const token = getToken();
-if (token) {
-  fetch(API + '/api/auth/me', { headers: { 'Authorization': 'Bearer ' + token } })
-    .then(res => {
-      if (res.ok) {
-        showApp();
-        return res.json();
-      }
-      throw new Error('invalid');
-    })
-    .then(user => {
-      document.getElementById('user-display').textContent = user.username;
-      initApp();
-    })
-    .catch(() => { clearToken(); showAuthScreen(); });
-} else {
-  showAuthScreen();
 }
+
+// Inicializar directamente (login deshabilitado)
+connectWebSocket();
+initApp();

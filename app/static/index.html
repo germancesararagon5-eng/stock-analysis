@@ -10,33 +10,7 @@
 </head>
 <body>
 
-<div id="auth-screen">
-  <div class="auth-card">
-    <h1>📊 Stock Analysis</h1>
-    <p class="auth-subtitle">Multi-Broker Trading System</p>
-    <div id="auth-forms">
-      <div id="login-form">
-        <h3>Iniciar Sesión</h3>
-        <input type="text" id="login-username" placeholder="Usuario" autocomplete="username">
-        <input type="password" id="login-password" placeholder="Contraseña" autocomplete="current-password">
-        <button id="login-btn">Ingresar</button>
-        <p class="auth-switch">¿No tenés cuenta? <a href="#" onclick="showRegister()">Registrate</a></p>
-        <p id="login-error" class="auth-error"></p>
-      </div>
-      <div id="register-form" style="display:none">
-        <h3>Crear Cuenta</h3>
-        <input type="text" id="register-username" placeholder="Usuario">
-        <input type="email" id="register-email" placeholder="Email">
-        <input type="password" id="register-password" placeholder="Contraseña">
-        <button id="register-btn">Crear Cuenta</button>
-        <p class="auth-switch">¿Ya tenés cuenta? <a href="#" onclick="showLogin()">Iniciar sesión</a></p>
-        <p id="register-error" class="auth-error"></p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<header id="app-header" style="display:none">
+<header id="app-header">
   <h1>📊 Stock Analysis <span>Multi-Broker</span></h1>
   <nav>
     <button data-tab="dashboard" class="active">Dashboard</button>
@@ -45,10 +19,6 @@
     <button data-tab="options">Opciones</button>
     <button data-tab="debug">Depuración</button>
   </nav>
-  <div class="user-menu">
-    <span id="user-display"></span>
-    <button id="logout-btn" title="Cerrar sesión">🚪</button>
-  </div>
 </header>
 
 <main>
@@ -150,6 +120,31 @@
 
 <!-- ══════════════════ ANALYSIS ══════════════════ -->
 <section id="tab-analysis" class="tab">
+
+  <!-- ── Top Rankings ─────────────────────────────── -->
+  <div class="card" id="top-ranking-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+      <h2 style="margin:0;font-size:16px;text-transform:none;letter-spacing:0;color:var(--text)">
+        🏆 Top Ranking por Confianza
+      </h2>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="tr-strategy" style="width:auto;margin:0;padding:6px 10px;font-size:12px">
+          <option value="scalping">Scalping</option>
+          <option value="swing">Swing</option>
+        </select>
+        <select id="tr-interval" style="width:auto;margin:0;padding:6px 10px;font-size:12px">
+          <option value="1m">1m</option>
+          <option value="5m" selected>5m</option>
+          <option value="15m">15m</option>
+          <option value="1h">1h</option>
+          <option value="1d">1d</option>
+        </select>
+        <button class="btn sm" id="tr-refresh-btn">⟳ Actualizar</button>
+      </div>
+    </div>
+    <div id="tr-loading" style="text-align:center;padding:20px;color:var(--muted);font-size:13px;display:none">Analizando tickers…</div>
+    <div id="tr-list"></div>
+  </div>
 
   <div class="card">
     <h2>

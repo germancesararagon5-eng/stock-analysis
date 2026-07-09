@@ -1,8 +1,20 @@
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
+import polars as pl
 
 from app.services.analysis_service import get_historical_data, run_analysis
+
+
+def _make_df(close, high=None, low=None):
+    n = len(close)
+    return pl.DataFrame({
+        "timestamp": [f"2024-01-{i+1:02d}" for i in range(n)],
+        "Close": close,
+        "High": high or [c * 1.02 for c in close],
+        "Low": low or [c * 0.98 for c in close],
+        "Open": close,
+        "Volume": [1000000] * n,
+    })
 
 
 def test_get_historical_data():
@@ -11,32 +23,27 @@ def test_get_historical_data():
 
     with patch("app.services.analysis_service.broker_manager.get_broker", return_value=mock_broker):
         with patch("app.services.analysis_service.yf") as mock_yf:
+            import pandas as pd
             mock_ticker = MagicMock()
             mock_yf.Ticker.return_value = mock_ticker
-            df = pd.DataFrame({
+            df_pd = pd.DataFrame({
                 "Close": [100, 101, 102],
                 "High": [105, 106, 107],
                 "Low": [95, 96, 97],
                 "Open": [100, 101, 102],
                 "Volume": [1000000] * 3,
             })
-            mock_ticker.history.return_value = df
+            mock_ticker.history.return_value = df_pd
 
             result = get_historical_data("AAPL", "1d", 30)
-            assert isinstance(result, pd.DataFrame)
+            assert isinstance(result, pl.DataFrame)
             assert "Close" in result.columns
 
 
 @patch("app.services.analysis_service.get_historical_data")
 def test_run_analysis_scalping(mock_get_data):
     n = 100
-    df = pd.DataFrame({
-        "Close": [100 + (i % 10) for i in range(n)],
-        "High": [105 + (i % 10) for i in range(n)],
-        "Low": [95 + (i % 10) for i in range(n)],
-        "Open": [100 + (i % 10) for i in range(n)],
-        "Volume": [1000000] * n,
-    })
+    df = _make_df([100 + (i % 10) for i in range(n)])
     mock_get_data.return_value = df
 
     result = run_analysis("AAPL", "scalping", "1d", 100)
@@ -52,13 +59,7 @@ def test_run_analysis_scalping(mock_get_data):
 def test_run_analysis_swing(mock_debug, mock_get_data):
     n = 200
     prices = [100] * 180 + list(range(100, 120))
-    df = pd.DataFrame({
-        "Close": prices,
-        "High": [p * 1.02 for p in prices],
-        "Low": [p * 0.98 for p in prices],
-        "Open": prices,
-        "Volume": [1000000] * n,
-    })
+    df = _make_df(prices)
     mock_get_data.return_value = df
 
     result = run_analysis("MSFT", "swing", "1d", 200)
@@ -68,10 +69,7 @@ def test_run_analysis_swing(mock_debug, mock_get_data):
 
 @patch("app.services.analysis_service.get_historical_data")
 def test_run_analysis_insufficient_data(mock_get_data):
-    df = pd.DataFrame({
-        "Close": [100] * 10, "High": [105] * 10,
-        "Low": [95] * 10, "Open": [100] * 10, "Volume": [1000000] * 10,
-    })
+    df = _make_df([100] * 10)
     mock_get_data.return_value = df
 
     result = run_analysis("AAPL", "scalping", "1d", 10)

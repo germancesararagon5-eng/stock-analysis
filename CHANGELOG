@@ -1,3 +1,28 @@
+stock-analysis (1.4.0) unstable; urgency=medium
+
+  * [ADD] Magic Link: login sin password via email (smtplib nativo)
+  * [ADD] POST /api/auth/magic-link: genera token de 15min y envía email
+  * [ADD] GET /api/auth/magic-link/verify: valida token y devuelve JWT
+  * [ADD] Modelo MagicLinkToken en DB para persistencia de tokens
+  * [ADD] Config SMTP: smtp_host, smtp_port, smtp_user, smtp_pass, smtp_from, app_url
+  * [ADD] Modo invitado: POST /api/auth/demo crea usuario temporal
+  * [ADD] user.is_demo flag para identificar cuentas demo
+  * [ADD] Frontend: botón "Enviar link mágico" con input email
+  * [ADD] Frontend: botón "Entrar como invitado" debajo del login
+  * [ADD] Frontend: Google Sign-In condicional (oculto si no configurado)
+  * [ADD] Google OAuth: google_client_id/config en Settings
+  * [ADD] POST /api/auth/google: verifica token de Google y crea usuario
+  * [ADD] GET /api/auth/google/config: expone si OAuth está habilitado
+  * [ADD] Frontend: botón "Continuar con Google" con ícono SVG
+  * [ADD] tests: 44 tests nuevos (main, broker_manager, debug, options, prediction, whatsapp)
+  * [FIX] app.js: error de sintaxis (}); → }) que rompía todo el JS
+  * [FIX] Frontend: login ya no muestra dashboard debajo (JS se ejecuta correctamente)
+  * [CHG] Cobertura de tests: 71% → 84%
+  * [CHG] .env.example: nuevas variables SMTP + GOOGLE_CLIENT_ID
+  * [DOC] CHANGELOG actualizado con todos los cambios hasta 1.4.0
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Wed, 08 Jul 2026 23:30:00 -0300
+
 stock-analysis (1.3.0) unstable; urgency=medium
 
   * [ADD] WebSockets: comunicación bidireccional en tiempo real

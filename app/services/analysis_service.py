@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-import pandas as pd
+import polars as pl
 import yfinance as yf
 
 from app.core.broker_manager import BrokerManager
@@ -38,20 +38,21 @@ def get_historical_data(
     ticker: str,
     interval: str = "5m",
     periods: int = 100,
-) -> pd.DataFrame:
+) -> pl.DataFrame:
     broker = broker_manager.get_broker()
 
     if broker.config.name == "yahoo_finance":
         yf_interval = INTERVAL_MAP.get(interval, "5m")
         yf_period = PERIOD_MAP.get(interval, "5d")
         stock = yf.Ticker(ticker)
-        df = stock.history(period=yf_period, interval=yf_interval)
-        if df.empty:
+        df_pd = stock.history(period=yf_period, interval=yf_interval)
+        if df_pd.empty:
             raise ValueError(f"No historical data for {ticker}")
-        return df.tail(periods)
+        df_pd = df_pd.tail(periods)
+        df = pl.from_pandas(df_pd.reset_index())
+        df = df.rename({df.columns[0]: "timestamp"})
+        return df
 
-    # Para brokers no-yahoo: construir OHLC desde get_realtime_data
-    # Placeholder: requeriría almacenamiento histórico local
     raise NotImplementedError(
         f"Historical data not implemented for {broker.config.name}"
     )

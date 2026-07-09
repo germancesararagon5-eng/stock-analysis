@@ -11,6 +11,14 @@ class Settings(BaseSettings):
     jwt_secret: str = "cambiar-en-produccion-123456"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_pass: str = ""
+    smtp_from: str = ""
+    app_url: str = "http://localhost:8001"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

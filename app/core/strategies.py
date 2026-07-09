@@ -2,49 +2,66 @@ import logging
 from typing import Any
 
 import numpy as np
-import pandas as pd
-import ta
+import polars as pl
 
 from app.core.debug import timed
 
 logger = logging.getLogger(__name__)
 
 
+def _to_series(col: pl.Series) -> list:
+    return [None if v is None else round(float(v), 2) for v in col]
+
+
+def _last(col: pl.Series) -> float:
+    v = col[-1]
+    return float(v) if v is not None else None
+
+
+def _prev(col: pl.Series) -> float:
+    v = col[-2]
+    return float(v) if v is not None else None
+
+
 @timed
-def scalping_signals(df: pd.DataFrame) -> dict[str, Any]:
-    if df.empty or len(df) < 26:
+def scalping_signals(df: pl.DataFrame) -> dict[str, Any]:
+    if df.height < 26:
         return {"signal": "NEUTRAL", "confidence": 0.0, "indicators": {}}
 
-    close = df["Close"]
+    c = df["Close"]
 
-    ema_9 = ta.trend.ema_indicator(close, window=9)
-    ema_21 = ta.trend.ema_indicator(close, window=21)
-    rsi = ta.momentum.rsi(close, window=14)
-    bb = ta.volatility.BollingerBands(close, window=20, window_dev=2)
-    bb_upper = bb.bollinger_hband()
-    bb_lower = bb.bollinger_lband()
-    bb_mid = bb.bollinger_mavg()
+    ema_9_s = c.ewm_mean(span=9, adjust=False)
+    ema_21_s = c.ewm_mean(span=21, adjust=False)
+    rsi_s = _rsi(c, 14)
+    bb_mid_s = c.rolling_mean(window_size=20)
+    bb_std_s = c.rolling_std(window_size=20)
+    bb_upper_s = bb_mid_s + 2 * bb_std_s
+    bb_lower_s = bb_mid_s - 2 * bb_std_s
 
-    last_price = float(close.iloc[-1])
-    last_ema9 = float(ema_9.iloc[-1]) if not pd.isna(ema_9.iloc[-1]) else last_price
-    last_ema21 = float(ema_21.iloc[-1]) if not pd.isna(ema_21.iloc[-1]) else last_price
-    last_rsi = float(rsi.iloc[-1]) if not pd.isna(rsi.iloc[-1]) else 50.0
-    last_bb_upper = float(bb_upper.iloc[-1]) if not pd.isna(bb_upper.iloc[-1]) else last_price
-    last_bb_lower = float(bb_lower.iloc[-1]) if not pd.isna(bb_lower.iloc[-1]) else last_price
+    last_price = _last(c)
+    last_ema9 = _last(ema_9_s) if _last(ema_9_s) is not None else last_price
+    last_ema21 = _last(ema_21_s) if _last(ema_21_s) is not None else last_price
+    last_rsi = _last(rsi_s) if _last(rsi_s) is not None else 50.0
+    last_bb_upper = _last(bb_upper_s) if _last(bb_upper_s) is not None else last_price
+    last_bb_lower = _last(bb_lower_s) if _last(bb_lower_s) is not None else last_price
+    last_bb_mid = _last(bb_mid_s) if _last(bb_mid_s) is not None else 0.0
+    prev_ema9 = _prev(ema_9_s)
+    prev_ema21 = _prev(ema_21_s)
 
     signal = "NEUTRAL"
     confidence = 0.0
     reasons = []
 
     # EMA crossover
-    if last_ema9 > last_ema21 and ema_9.iloc[-2] <= ema_21.iloc[-2]:
-        signal = "BUY"
-        confidence += 0.35
-        reasons.append("EMA 9 cruzó arriba EMA 21")
-    elif last_ema9 < last_ema21 and ema_9.iloc[-2] >= ema_21.iloc[-2]:
-        signal = "SELL"
-        confidence += 0.35
-        reasons.append("EMA 9 cruzó abajo EMA 21")
+    if prev_ema9 is not None and prev_ema21 is not None:
+        if last_ema9 > last_ema21 and prev_ema9 <= prev_ema21:
+            signal = "BUY"
+            confidence += 0.35
+            reasons.append("EMA 9 cruzó arriba EMA 21")
+        elif last_ema9 < last_ema21 and prev_ema9 >= prev_ema21:
+            signal = "SELL"
+            confidence += 0.35
+            reasons.append("EMA 9 cruzó abajo EMA 21")
 
     # RSI
     if last_rsi < 30:
@@ -81,7 +98,7 @@ def scalping_signals(df: pd.DataFrame) -> dict[str, Any]:
         "ema_21": round(last_ema21, 2),
         "rsi_14": round(last_rsi, 2),
         "bb_upper": round(last_bb_upper, 2),
-        "bb_mid": round(bb_mid.iloc[-1], 2) if not pd.isna(bb_mid.iloc[-1]) else 0,
+        "bb_mid": round(last_bb_mid, 2),
         "bb_lower": round(last_bb_lower, 2),
         "price": round(last_price, 2),
     }
@@ -95,43 +112,47 @@ def scalping_signals(df: pd.DataFrame) -> dict[str, Any]:
 
 
 @timed
-def swing_signals(df: pd.DataFrame) -> dict[str, Any]:
-    if df.empty or len(df) < 200:
+def swing_signals(df: pl.DataFrame) -> dict[str, Any]:
+    if df.height < 200:
         return {"signal": "NEUTRAL", "confidence": 0.0, "indicators": {}}
 
-    close = df["Close"]
-    high = df["High"]
-    low = df["Low"]
+    c = df["Close"]
+    high = df["High"].to_numpy()
+    low = df["Low"].to_numpy()
 
-    macd = ta.trend.MACD(close)
-    macd_line = macd.macd()
-    signal_line = macd.macd_signal()
-    histogram = macd.macd_diff()
-    sma_200 = ta.trend.sma_indicator(close, window=200)
+    ema12 = c.ewm_mean(span=12, adjust=False)
+    ema26 = c.ewm_mean(span=26, adjust=False)
+    macd_line = ema12 - ema26
+    signal_line = macd_line.ewm_mean(span=9, adjust=False)
+    histogram = macd_line - signal_line
+    sma_200 = c.rolling_mean(window_size=200)
 
-    last_price = float(close.iloc[-1])
-    last_sma200 = float(sma_200.iloc[-1]) if not pd.isna(sma_200.iloc[-1]) else last_price
-    last_macd = float(macd_line.iloc[-1]) if not pd.isna(macd_line.iloc[-1]) else 0.0
-    last_signal = float(signal_line.iloc[-1]) if not pd.isna(signal_line.iloc[-1]) else 0.0
-    last_hist = float(histogram.iloc[-1]) if not pd.isna(histogram.iloc[-1]) else 0.0
+    last_price = _last(c)
+    last_sma200 = _last(sma_200) if _last(sma_200) is not None else last_price
+    last_macd = _last(macd_line) if _last(macd_line) is not None else 0.0
+    last_signal = _last(signal_line) if _last(signal_line) is not None else 0.0
+    last_hist = _last(histogram) if _last(histogram) is not None else 0.0
+    prev_macd = _prev(macd_line)
+    prev_signal = _prev(signal_line)
 
     # Soportes y resistencias históricos
-    supports = _find_levels(low.values, kind="support")
-    resistances = _find_levels(high.values, kind="resistance")
+    supports = _find_levels(low, kind="support")
+    resistances = _find_levels(high, kind="resistance")
 
     signal = "NEUTRAL"
     confidence = 0.0
     reasons = []
 
     # MACD crossover
-    if last_macd > last_signal and macd_line.iloc[-2] <= signal_line.iloc[-2]:
-        signal = "BUY"
-        confidence += 0.40
-        reasons.append("MACD cruzó arriba signal line")
-    elif last_macd < last_signal and macd_line.iloc[-2] >= signal_line.iloc[-2]:
-        signal = "SELL"
-        confidence += 0.40
-        reasons.append("MACD cruzó abajo signal line")
+    if prev_macd is not None and prev_signal is not None:
+        if last_macd > last_signal and prev_macd <= prev_signal:
+            signal = "BUY"
+            confidence += 0.40
+            reasons.append("MACD cruzó arriba signal line")
+        elif last_macd < last_signal and prev_macd >= prev_signal:
+            signal = "SELL"
+            confidence += 0.40
+            reasons.append("MACD cruzó abajo signal line")
 
     # SMA 200 tendencia
     if last_price > last_sma200:
@@ -178,42 +199,53 @@ def swing_signals(df: pd.DataFrame) -> dict[str, Any]:
     }
 
 
-def compute_chart_data(df: pd.DataFrame) -> dict:
-    if df.empty:
+def compute_chart_data(df: pl.DataFrame) -> dict:
+    if df.height == 0:
         return {"timestamp": [], "close": [], "ema_9": [], "ema_21": [],
                 "bb_upper": [], "bb_mid": [], "bb_lower": [], "rsi_14": [],
                 "macd": [], "macd_signal": [], "macd_histogram": []}
 
-    close = df["Close"]
+    c = df["Close"]
+    timestamps = df.get_column("timestamp").to_list() if "timestamp" in df.columns else []
 
-    ema9 = ta.trend.ema_indicator(close, window=9)
-    ema21 = ta.trend.ema_indicator(close, window=21)
-    rsi = ta.momentum.rsi(close, window=14)
-    bb = ta.volatility.BollingerBands(close, window=20, window_dev=2)
+    ema9 = c.ewm_mean(span=9, adjust=False)
+    ema21 = c.ewm_mean(span=21, adjust=False)
+    rsi = _rsi(c, 14)
+    bb_mid = c.rolling_mean(window_size=20)
+    bb_std = c.rolling_std(window_size=20)
+    bb_upper = bb_mid + 2 * bb_std
+    bb_lower = bb_mid - 2 * bb_std
 
-    macd = ta.trend.MACD(close)
-    macd_line = macd.macd()
-    macd_signal = macd.macd_signal()
-    macd_hist = macd.macd_diff()
-
-    timestamps = [str(ts) for ts in df.index]
-
-    def _clean(series):
-        return [None if pd.isna(v) else round(float(v), 2) for v in series]
+    m_ema12 = c.ewm_mean(span=12, adjust=False)
+    m_ema26 = c.ewm_mean(span=26, adjust=False)
+    macd_line = m_ema12 - m_ema26
+    macd_signal = macd_line.ewm_mean(span=9, adjust=False)
+    macd_hist = macd_line - macd_signal
 
     return {
         "timestamp": timestamps,
-        "close": [round(float(v), 2) for v in close],
-        "ema_9": _clean(ema9),
-        "ema_21": _clean(ema21),
-        "bb_upper": _clean(bb.bollinger_hband()),
-        "bb_mid": _clean(bb.bollinger_mavg()),
-        "bb_lower": _clean(bb.bollinger_lband()),
-        "rsi_14": _clean(rsi),
-        "macd": _clean(macd_line),
-        "macd_signal": _clean(macd_signal),
-        "macd_histogram": _clean(macd_hist),
+        "close": [round(float(v), 2) for v in c if v is not None],
+        "ema_9": _to_series(ema9),
+        "ema_21": _to_series(ema21),
+        "bb_upper": _to_series(bb_upper),
+        "bb_mid": _to_series(bb_mid),
+        "bb_lower": _to_series(bb_lower),
+        "rsi_14": _to_series(rsi),
+        "macd": _to_series(macd_line),
+        "macd_signal": _to_series(macd_signal),
+        "macd_histogram": _to_series(macd_hist),
     }
+
+
+def _rsi(close: pl.Series, period: int = 14) -> pl.Series:
+    delta = close.diff().cast(pl.Float64)
+    gain = delta.map_elements(lambda x: x if x is not None and x > 0 else 0.0, return_dtype=pl.Float64)
+    loss = delta.map_elements(lambda x: -x if x is not None and x < 0 else 0.0, return_dtype=pl.Float64)
+    avg_gain = gain.ewm_mean(span=period, adjust=False)
+    avg_loss = loss.ewm_mean(span=period, adjust=False)
+    rs = avg_gain / avg_loss
+    rsi = 100.0 - (100.0 / (1.0 + rs))
+    return rsi
 
 
 def _find_levels(values: np.ndarray, kind: str = "support", bins: int = 30) -> list[float]:

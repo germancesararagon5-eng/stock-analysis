@@ -111,6 +111,42 @@ def place_order(payload: OrderRequest):
     )
 
 
+POPULAR_TICKERS = [
+    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "JPM", "V", "JNJ",
+    "WMT", "PG", "MA", "UNH", "HD", "DIS", "BAC", "NFLX", "ADBE", "CRM",
+    "PEP", "KO", "INTC", "AMD", "CSCO", "NKE", "ABBV", "AVGO", "TXN", "QCOM",
+    "COST", "PYPL", "UBER", "SPY", "QQQ", "DIA", "BTC-USD", "ETH-USD",
+    "SOL-USD", "BNB-USD", "XRP-USD", "GC=F", "CL=F",
+]
+
+
+@router.get("/top-ranking")
+def top_ranking(
+    strategy: str = Query("scalping"),
+    interval: str = Query("5m"),
+    periods: int = Query(100, ge=20, le=500),
+    tickers: str = Query("", description="Comma-separated subset; empty = all popular"),
+):
+    selected = [t.strip().upper() for t in tickers.split(",") if t.strip()] if tickers else POPULAR_TICKERS
+    results = []
+    for ticker in selected:
+        try:
+            r = run_analysis(ticker=ticker, strategy=strategy, interval=interval, periods=periods)
+            if r["signal"] == "NEUTRAL" and r["confidence"] == 0:
+                continue
+            results.append({
+                "ticker": ticker,
+                "signal": r["signal"],
+                "confidence": r["confidence"],
+                "price": r.get("indicators", {}).get("price"),
+                "reasons": r.get("reasons", []),
+            })
+        except Exception as e:
+            logger.warning("top-ranking error %s: %s", ticker, e)
+    results.sort(key=lambda x: x["confidence"], reverse=True)
+    return {"strategy": strategy, "interval": interval, "rankings": results}
+
+
 @router.post("/technical-analysis")
 def technical_analysis(
     ticker: str = Query(...),

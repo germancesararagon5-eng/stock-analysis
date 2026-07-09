@@ -7,6 +7,7 @@ os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
 os.environ.setdefault("DATABASE_URL_SYNC", "sqlite:///./test.db")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
 os.environ.setdefault("REDIS_URL", "")
+os.environ.setdefault("POLARS_SKIP_CPU_CHECK", "1")
 os.environ.setdefault("WHATSAPP_GATEWAY_URL", "http://localhost:3000")
 
 from app.database import Base, SessionLocal, engine
