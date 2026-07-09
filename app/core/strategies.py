@@ -212,6 +212,7 @@ def compute_chart_data(df: pl.DataFrame) -> dict:
     close_vals = [round(float(v), 2) for v in c if v is not None]
     if len(close_vals) != len(timestamps):
         timestamps = [t for t, keep in zip(timestamps, valid_mask) if keep]
+    timestamps = [t.isoformat() if hasattr(t, 'isoformat') else str(t) for t in timestamps]
 
     ema9 = c.ewm_mean(span=9, adjust=False)
     ema21 = c.ewm_mean(span=21, adjust=False)

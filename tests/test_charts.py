@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import patch
 
 import polars as pl
@@ -182,3 +183,23 @@ def test_all_frontend_charts_registered():
     names = {c.name for c in get_registered_charts()}
     for required in ("sparkline", "multi-panel", "technical-analysis"):
         assert required in names, f"Falta chart registrado: {required}"
+
+
+# ── Regression: datetime timestamps must be serialized as strings ─
+
+
+def test_chart_with_datetime_timestamps_returns_200(client):
+    df = pl.DataFrame({
+        "timestamp": [datetime(2026, 7, 1), datetime(2026, 7, 2), datetime(2026, 7, 3)],
+        "Close": [100.0, 101.0, 102.0],
+        "High": [105.0] * 3, "Low": [95.0] * 3, "Open": [100.0] * 3, "Volume": [1000000] * 3,
+    })
+    with (
+        patch("app.services.analysis_service.get_historical_data", return_value=df),
+        patch("app.routers.analysis_router.get_historical_data", return_value=df),
+    ):
+        resp = client.get("/api/analysis/chart/REGR?strategy=scalping&interval=1d&periods=20")
+
+    assert resp.status_code == 200, f"chart con datetime timestamps falló: {resp.text[:200]}"
+    data = resp.json()
+    assert isinstance(data["series"]["timestamp"][0], str)
