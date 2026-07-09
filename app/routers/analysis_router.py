@@ -25,22 +25,35 @@ broker_manager = BrokerManager()
 
 @router.post("/analyze", response_model=AnalysisResponse)
 def analyze(payload: AnalysisRequest):
-    result = run_analysis(
-        ticker=payload.ticker,
-        strategy=payload.strategy,
-        interval=payload.interval,
-        periods=payload.periods,
-    )
-    return AnalysisResponse(
-        ticker=result["ticker"],
-        strategy=result["strategy"],
-        signal=result["signal"],
-        confidence=result["confidence"],
-        indicators=result.get("indicators", {}),
-        reasons=result.get("reasons", []),
-        interval=result.get("interval", payload.interval),
-        timestamp=result.get("timestamp", ""),
-    )
+    try:
+        result = run_analysis(
+            ticker=payload.ticker,
+            strategy=payload.strategy,
+            interval=payload.interval,
+            periods=payload.periods,
+        )
+        return AnalysisResponse(
+            ticker=result["ticker"],
+            strategy=result["strategy"],
+            signal=result["signal"],
+            confidence=result["confidence"],
+            indicators=result.get("indicators", {}),
+            reasons=result.get("reasons", []),
+            interval=result.get("interval", payload.interval),
+            timestamp=result.get("timestamp", ""),
+        )
+    except Exception as e:
+        logger.warning("Analyze error for %s: %s", payload.ticker, e)
+        return AnalysisResponse(
+            ticker=payload.ticker,
+            strategy=payload.strategy,
+            signal="NEUTRAL",
+            confidence=0.0,
+            indicators={},
+            reasons=[str(e)],
+            interval=payload.interval,
+            timestamp="",
+        )
 
 
 @router.get("/chart/{ticker}", response_model=ChartResponse)
@@ -105,11 +118,15 @@ def get_chart(
 
 @router.get("/data/{ticker}", response_model=DataResponse)
 def get_data(ticker: str):
-    broker = broker_manager.get_broker()
-    data = broker.get_realtime_data(ticker)
-    if "error" in data:
-        return DataResponse(ticker=ticker, error=data["error"])
-    return DataResponse(ticker=ticker, price=data.get("price"), strategy_signals=None)
+    try:
+        broker = broker_manager.get_broker()
+        data = broker.get_realtime_data(ticker)
+        if "error" in data:
+            return DataResponse(ticker=ticker, error=data["error"])
+        return DataResponse(ticker=ticker, price=data.get("price"), strategy_signals=None)
+    except Exception as e:
+        logger.warning("Data error for %s: %s", ticker, e)
+        return DataResponse(ticker=ticker, error=str(e))
 
 
 @router.post("/order", response_model=OrderResponse)

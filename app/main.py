@@ -35,6 +35,9 @@ async def lifespan(app: FastAPI):
         broker_manager.load_from_db(db)
     finally:
         db.close()
+    if broker_manager.active_broker is None:
+        logger.info("Sin broker en DB — usando yahoo_finance por defecto")
+        broker_manager.switch(name="yahoo_finance")
     yield
 
 
