@@ -1,5 +1,11 @@
 stock-analysis (2.1.0) unstable; urgency=medium
 
+  * [FIX] compute_chart_data: convierte datetime->ISO string; Pydantic no coercionaba datetime a str -> 500
+  * [FIX] GET /api/analysis/data/{ticker}: try/except para evitar 500 si no hay broker activo
+  * [FIX] POST /api/analysis/analyze: try/except para evitar 500 si get_historical_data falla
+  * [CHG] lifespan: si no hay broker en DB, usa yahoo_finance por defecto
+  * [ADD] Test regresión datetime timestamps: chart con datetime objects devuelve 200
+
   * [FIX] Chart endpoint: try/except para evitar 500 en tickers sin datos; retorna series vacías + mensaje de error en reasons
   * [FIX] Frontend sparkline: muestra el error real del backend en vez de genérico "Datos insuficientes"
   * [FIX] Frontend fetchChart: muestra backend reasons[] cuando series.timestamp está vacío

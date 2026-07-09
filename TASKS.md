@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 112 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.1.0
+> Estado: 113 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.1.0
 
 ## ✅ Completado
 
@@ -25,7 +25,11 @@
 - [x] **Frontend api() robusta**: valida Content-Type antes de JSON.parse()
 - [x] **try/except en technical_analysis endpoint**: evita 500 con datos faltantes
 - [x] **compute_chart_data timestamp alignment**: timestamps se filtran cuando close tiene None
-- [x] **SKILL.md**: nuevo workflow de 8 pasos (análisis → opciones → code → test → fix → doc → commit → push)
+- [x] **SKILL.md**: nuevo workflow (análisis → plan → implementación → self-review → test loop → documentar → commit → push)
+- [x] **Broker default en startup**: si no hay broker en DB, usa yahoo_finance automáticamente
+- [x] **try/except en GET /api/analysis/data/{ticker} y POST /api/analysis/analyze**: evitan 500 si no hay broker o datos
+- [x] **compute_chart_data datetime→str**: convierte datetime a ISO string para que Pydantic valide correctamente
+- [x] **test de regresión con datetime timestamps**: chart endpoint no crashea cuando timestamps son datetime objects
 
 ## Alta Prioridad
 
