@@ -16,5 +16,6 @@ whatsapp-gateway/node_modules/
 dist/
 build/
 setup-github.sh
-.opencode/
+.opencode/*
+!.opencode/context.md
 .coverage

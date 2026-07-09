@@ -11,6 +11,8 @@
 - [x] **Anchored summaries** activados en opencode.json para no perder contexto entre sesiones
 - [x] `estudio/04-python-fastapi.md` actualizado con Polars
 - [x] `SKILL.md` actualizado con Polars, top-ranking, login deshabilitado
+- [x] Top ranking: paralelización con ThreadPoolExecutor (evita timeouts de red)
+- [x] Frontend POPULAR_TICKERS sincronizado con backend
 
 ## Alta Prioridad
 
@@ -19,9 +21,9 @@
   - RSI > 70 → señal SELL + razón "sobrecomprado"
   - EMA9 > EMA21 (golden cross) → BUY
   - EMA9 < EMA21 (death cross) → SELL
-- [ ] Tests de top-ranking endpoint
-- [ ] Tests de persistencia BackgroundResult
+- [ ] Tests de persistencia BackgroundResult (modelo nuevo, 0 tests)
 - [ ] Subir cobertura `prediction_service.py` (61%)
+- [ ] Tests de lógica de paralelización en top-ranking
 
 ## Media Prioridad
 

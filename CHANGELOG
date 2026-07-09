@@ -1,3 +1,12 @@
+stock-analysis (1.7.0) unstable; urgency=medium
+
+  * [FIX] Top ranking: paralelización con ThreadPoolExecutor para evitar timeouts (reducido de ~27s a ~6s)
+  * [FIX] Frontend POPULAR_TICKERS sincronizado con backend (removidos BRK.B, SQ, etc. delistados)
+  * [ADD] Timeout global de 90s en top-ranking para evitar cuelgues
+  * [CHG] TASKS.md actualizado
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 11:45:00 -0300
+
 stock-analysis (1.6.0) unstable; urgency=medium
 
   * [ADD] BackgroundResult model: resultados persistentes en DB (no se pierden al reiniciar)

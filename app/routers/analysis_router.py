@@ -1,4 +1,6 @@
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 
 from fastapi import APIRouter, Query
 
@@ -128,21 +130,42 @@ def top_ranking(
     tickers: str = Query("", description="Comma-separated subset; empty = all popular"),
 ):
     selected = [t.strip().upper() for t in tickers.split(",") if t.strip()] if tickers else POPULAR_TICKERS
-    results = []
-    for ticker in selected:
+
+    def _process(ticker: str) -> dict | None:
         try:
             r = run_analysis(ticker=ticker, strategy=strategy, interval=interval, periods=periods)
             if r["signal"] == "NEUTRAL" and r["confidence"] == 0:
-                continue
-            results.append({
+                return None
+            return {
                 "ticker": ticker,
                 "signal": r["signal"],
                 "confidence": r["confidence"],
                 "price": r.get("indicators", {}).get("price"),
                 "reasons": r.get("reasons", []),
-            })
+            }
         except Exception as e:
             logger.warning("top-ranking error %s: %s", ticker, e)
+            return None
+
+    results = []
+    max_workers = min(6, len(selected))
+    deadline = time.monotonic() + 90
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(_process, t): t for t in selected}
+        while futures:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                logger.warning("top-ranking timed out, %d tickers pending", len(futures))
+                break
+            done, futures = wait(futures, timeout=min(30, remaining), return_when=FIRST_COMPLETED)
+            for future in done:
+                try:
+                    item = future.result()
+                    if item is not None:
+                        results.append(item)
+                except Exception as e:
+                    logger.warning("top-ranking future error: %s", e)
+
     results.sort(key=lambda x: x["confidence"], reverse=True)
     return {"strategy": strategy, "interval": interval, "rankings": results}
 
