@@ -1443,13 +1443,11 @@ async function loadWhatsAppConfig() {
   try {
     const c = await api('GET', '/api/options/whatsapp/config');
     document.getElementById('wa-phone').value = c.phone_number || '';
-    const qrContainer = document.getElementById('wa-qr-container');
     const connectedInfo = document.getElementById('wa-connected-info');
     const disconnectedInfo = document.getElementById('wa-disconnected-info');
     const statusEl = document.getElementById('wa-status');
 
     if (c.connected) {
-      qrContainer.style.display = 'none';
       connectedInfo.style.display = 'block';
       disconnectedInfo.style.display = 'none';
       document.getElementById('wa-connected-phone').textContent = c.phone || c.phone_number || '—';
@@ -1460,26 +1458,15 @@ async function loadWhatsAppConfig() {
       disconnectedInfo.style.display = 'block';
       statusEl.textContent = c.phone_number ? '⚠️ Número guardado, esperando conexión' : 'No configurado';
       statusEl.style.color = 'var(--muted)';
-      // Try to fetch QR
-      loadQRCode();
     }
   } catch (_) {}
 }
 
-async function loadQRCode() {
-  const qrContainer = document.getElementById('wa-qr-container');
-  const qrImg = document.getElementById('wa-qr-img');
-  try {
-    const qr = await api('GET', '/api/options/whatsapp/qr');
-    if (qr.qr) {
-      qrContainer.style.display = 'block';
-      qrImg.src = qr.qr;
-    } else {
-      qrContainer.style.display = 'none';
-    }
-  } catch (_) {
-    qrContainer.style.display = 'none';
-  }
+async function testWhatsAppFromOptions() {
+  const result = await api('POST', '/api/alerts/test-whatsapp');
+  const msg = result.status === 'sent' ? '✅ Mensaje de prueba enviado' : '❌ Error: ' + (result.reason || result.error || result.status);
+  addLog('[WHATSAPP] ' + msg, result.status === 'sent' ? 'ok' : 'err');
+  alert(msg);
 }
 
 async function saveWhatsAppConfig() {
@@ -1667,7 +1654,7 @@ function initApp() {
   document.getElementById('opt-switch-btn').addEventListener('click', optSwitchBroker);
   document.getElementById('opt-debug-toggle').addEventListener('change', optToggleDebug);
   document.getElementById('wa-save-btn').addEventListener('click', saveWhatsAppConfig);
-  document.getElementById('wa-refresh-qr-btn').addEventListener('click', loadQRCode);
+  document.getElementById('wa-test-btn').addEventListener('click', testWhatsAppFromOptions);
 
   // ── Predictions ──
   document.getElementById('pred-filter-btn').addEventListener('click', () => {

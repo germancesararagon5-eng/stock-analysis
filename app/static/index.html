@@ -478,25 +478,21 @@
         <span class="info-trigger" title="¿Qué es esto?">i</span>
         <div class="info-popup">
           <h3>WhatsApp Web Auto-Hosteado</h3>
-          <p>Usa un contenedor Node.js con <strong>Baileys</strong> para emular WhatsApp Web. Sin costos, sin Twilio. Escaneá el código QR con tu WhatsApp para conectar. La sesión se guarda permanentemente.</p>
+          <p>Usa un contenedor Node.js con <strong>Baileys</strong> para emular WhatsApp Web. Sin costos, sin Twilio. La sesión se guarda permanentemente.</p>
           <a href="https://github.com/WhiskeySockets/Baileys" target="_blank" rel="noopener">↗ GitHub: Baileys</a>
         </div>
       </span>
     </h2>
 
-    <!-- QR + Status -->
-    <div id="wa-qr-section" style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-      <div id="wa-qr-container" style="display:none;text-align:center;background:#fff;border-radius:8px;padding:8px;width:180px">
-        <img id="wa-qr-img" style="width:160px;height:160px;image-rendering:pixelated" alt="QR">
-        <div style="font-size:10px;color:#666;margin-top:4px">Escaneá con WhatsApp</div>
-      </div>
+    <!-- Status -->
+    <div id="wa-status-section" style="display:flex;gap:16px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
       <div id="wa-connected-info" style="display:none;font-size:13px;color:var(--green)">
         ✅ Conectado como <span id="wa-connected-phone">—</span>
       </div>
       <div id="wa-disconnected-info" style="font-size:13px;color:var(--muted)">
         ⏳ Esperando conexión...
       </div>
-      <button class="btn sm outline" id="wa-refresh-qr-btn" title="Actualizar QR">⟳ QR</button>
+      <button class="btn sm outline" id="wa-test-btn">📨 Probar WhatsApp</button>
     </div>
 
     <!-- Phone number config -->

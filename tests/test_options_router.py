@@ -77,13 +77,6 @@ def test_whatsapp_config_set(mock_update, client):
     assert resp.status_code == 200
 
 
-@patch("app.services.whatsapp_service.get_qr")
-def test_whatsapp_qr(mock_qr, client):
-    mock_qr.return_value = {"qr": "base64data"}
-    resp = client.get("/api/options/whatsapp/qr")
-    assert resp.status_code == 200
-
-
 def test_debug_status(client):
     resp = client.get("/api/options/debug/status")
     assert resp.status_code == 200

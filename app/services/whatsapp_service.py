@@ -21,18 +21,6 @@ def check_connection() -> dict:
         return {"connected": False, "phone": None}
 
 
-def get_qr() -> dict:
-    try:
-        r = requests.get(f"{GATEWAY_URL}/qr", timeout=10)
-        if r.status_code == 404:
-            return {"qr": None, "error": "No QR available — check if already connected"}
-        r.raise_for_status()
-        return r.json()
-    except requests.RequestException as e:
-        logger.warning("Error obteniendo QR: %s", e)
-        return {"qr": None, "error": str(e)}
-
-
 @timed
 def send_alert(message: str, to: Optional[str] = None) -> dict:
     if not to:

@@ -122,32 +122,6 @@ def test_check_connection_failure(mock_get):
     assert result["connected"] is False
 
 
-@patch("app.services.whatsapp_service.requests.get")
-def test_get_qr(mock_get):
-    mock_get.return_value.status_code = 200
-    mock_get.return_value.json.return_value = {"qr": "base64data"}
-    from app.services.whatsapp_service import get_qr
-    result = get_qr()
-    assert result == {"qr": "base64data"}
-
-
-@patch("app.services.whatsapp_service.requests.get")
-def test_get_qr_404(mock_get):
-    mock_get.return_value.status_code = 404
-    from app.services.whatsapp_service import get_qr
-    result = get_qr()
-    assert result["qr"] is None
-
-
-@patch("app.services.whatsapp_service.requests.get")
-def test_get_qr_error(mock_get):
-    mock_get.side_effect = requests.RequestException("Gateway error")
-    from app.services.whatsapp_service import get_qr
-    result = get_qr()
-    assert result["qr"] is None
-    assert "error" in result
-
-
 @patch("app.database.SessionLocal")
 def test_update_phone_number(mock_session_local):
     mock_db = MagicMock()

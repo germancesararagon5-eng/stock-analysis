@@ -146,12 +146,6 @@ def whatsapp_config_set(phone_number: str = Query("")):
     return result
 
 
-@router.get("/whatsapp/qr")
-def whatsapp_qr():
-    from app.services.whatsapp_service import get_qr
-    return get_qr()
-
-
 # ── Broker Config (moved from dashboard) ────────────────────
 
 @router.get("/broker/list")
