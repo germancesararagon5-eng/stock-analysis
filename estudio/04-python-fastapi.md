@@ -204,6 +204,39 @@ ohlcv_cols = ["Open", "High", "Low", "Close", "Volume"]
 df_dict = {k: v for k, v in df_dict.items() if k in ohlcv_cols}
 ```
 
+## Paralelización con ThreadPoolExecutor
+
+El endpoint `GET /api/analysis/top-ranking` procesaba los tickers **secuencialmente**, haciendo una llamada HTTP a Yahoo Finance por cada uno. Con 48 tickers, eso tomaba ~27 segundos — causando timeouts de red en el frontend.
+
+**Solución: `ThreadPoolExecutor` con 6 workers:**
+
+```python
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+
+def _process(ticker: str) -> dict | None:
+    try:
+        r = run_analysis(ticker=ticker, ...)
+        return {...} if r["signal"] != "NEUTRAL" else None
+    except Exception:
+        return None
+
+results = []
+with ThreadPoolExecutor(max_workers=6) as pool:
+    futures = {pool.submit(_process, t): t for t in selected}
+    while futures:
+        done, futures = wait(futures, timeout=30, return_when=FIRST_COMPLETED)
+        for future in done:
+            item = future.result()
+            if item is not None:
+                results.append(item)
+```
+
+Esto redujo el tiempo de ~27s a ~6s. Se agregó un deadline global de 90s como safety net.
+
+**Alternativas consideradas:**
+- `asyncio.gather` — no servía porque `yfinance` es sincrónico
+- `concurrent.futures.as_completed(timeout=90)` — el timeout se aplica por iteración, no global
+
 ## Persistencia del Background Analyzer
 
 El `BackgroundAnalyzer` originalmente guardaba sus resultados solo en memoria (`self._results`), perdiéndose al reiniciar el servidor. Ahora persiste en DB vía modelo `BackgroundResult`.

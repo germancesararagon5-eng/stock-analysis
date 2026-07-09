@@ -1,8 +1,8 @@
 # Testing con pytest
 
-> **Fecha:** 2026-07-08
+> **Fecha:** 2026-07-09
 
-## ¿Por qué Testear?
+## ¿Por Qué Testear?
 
 Sin tests:
 ```
@@ -12,7 +12,7 @@ Cambio una línea → ¿funciona? → probar todo manualmente → me olvido de a
 
 Con tests:
 ```
-Cambio una línea → corro tests → 13 tests verifican → si pasa, funciona
+Cambio una línea → corro tests → 101 tests verifican → si pasa, funciona
 ```
 
 ## pytest — El Framework
@@ -21,52 +21,77 @@ pytest descubre y ejecuta tests automáticamente:
 
 ```
 tests/
-├── test_brokers.py     # Tests de brokers
-├── test_config.py      # Tests de API endpoints
-└── test_strategies.py  # Tests de estrategias
+├── test_analysis_router.py   # 9 tests de endpoints (analyze, chart, top-ranking, etc.)
+├── test_alerts_router.py     # Tests de alertas
+├── test_broker_manager.py    # Tests de BrokerManager + switch
+├── test_config_router.py     # Tests de config endpoints
+├── test_debug.py             # Tests de DebugTracker
+├── test_main.py              # Tests de health, CORS, lifespan
+├── test_options_router.py    # Tests de opciones
+├── test_prediction_service.py# Tests de predicciones y resolución
+├── test_strategies.py        # Tests de scalping + swing
+├── test_whatsapp_service.py  # Tests de WhatsApp
+└── conftest.py               # Fixtures compartidas
 ```
 
 ```bash
-pytest                    # Corre todos los tests
-pytest -v                 # Verboso (muestra cada test)
-pytest -k "yahoo"         # Solo tests que matchean "yahoo"
-pytest --tb=short         # Traza corta en errores
+# Todos los tests
+POLARS_SKIP_CPU_CHECK=1 python3 -m pytest tests/ -q --tb=short
+
+# Con cobertura
+POLARS_SKIP_CPU_CHECK=1 python3 -m pytest --cov=app --cov-report=term --tb=short
+
+# Test específico
+POLARS_SKIP_CPU_CHECK=1 python3 -m pytest tests/test_analysis_router.py -v
 ```
 
-## Nuestros Tests (13 tests, 3 archivos)
+**Nota:** `POLARS_SKIP_CPU_CHECK=1` es necesario porque la CPU del proyecto
+no soporta AVX/AVX2 (polars corre con `rtcompat`).
 
-### 1. test_brokers.py — Conexión a brokers
+## Nuestros Tests (101 tests, 10 archivos)
 
-```python
-def test_yahoo_connect(yahoo_broker):
-    assert yahoo_broker.connect() is True
+### 1. test_analysis_router.py — Endpoints de análisis
 
-def test_yahoo_get_data(yahoo_broker):
-    data = yahoo_broker.get_realtime_data("AAPL")
-    assert "price" in data
-```
-
-### 2. test_config.py — API Endpoints
-
-Usa **TestClient** de FastAPI para simular requests HTTP sin
-necesidad de tener el servidor corriendo:
+Usa **TestClient** de FastAPI + fixtures con DataFrames Polars mockeados:
 
 ```python
-from fastapi.testclient import TestClient
+@pytest.fixture
+def mock_service_data():
+    n = 100
+    df = pl.DataFrame({
+        "timestamp": [f"2024-01-{i+1:02d}" for i in range(n)],
+        "Close": [100 + (i % 10) for i in range(n)],
+        "High": [105 + (i % 10) for i in range(n)],
+        "Low": [95 + (i % 10) for i in range(n)],
+    })
+    with patch("app.services.analysis_service.get_historical_data", return_value=df):
+        yield df
 
-def test_health():
-    resp = client.get("/health")
+def test_top_ranking(client, mock_service_data):
+    resp = client.get("/api/analysis/top-ranking?tickers=AAPL,MSFT")
     assert resp.status_code == 200
+    assert "rankings" in resp.json()
 ```
 
-### 3. test_strategies.py — Lógica de trading
+### 2. test_strategies.py — Lógica de trading
+
+Estrategias con DataFrames Polars reales (no mockeados):
 
 ```python
-def test_scalping_buy_signal():
-    prices = [100 + sin(i) * 15 for i in range(100)]
-    df = make_sample_df(prices)
-    result = scalping_signals(df)
-    assert result["signal"] in ("BUY", "SELL", "NEUTRAL")
+def test_scalping_rsi_oversold():
+    df = _df_from(precios_bajos)  # helper con pl.DataFrame
+    r = scalping_signals(df)
+    assert r["signal"] == "BUY"
+    assert "sobrevendido" in " ".join(r["reasons"])
+```
+
+### 3. test_broker_manager.py — Conexión a brokers
+
+```python
+def test_switch_broker():
+    with patch("app.core.broker_manager.BROKER_MAP", {"test": MockBroker}):
+        result = bm.switch("test")
+        assert result["connected"] is True
 ```
 
 ## conftest.py — Configuración Compartida
@@ -82,16 +107,37 @@ def setup_db():
 
 `autouse=True` significa que se ejecuta antes/después de CADA test.
 
-## ¿Qué cubrimos?
+También hay fixtures para `client` (TestClient) y configuraciones de entorno
+(`DATABASE_URL=sqlite:///./test.db`, `POLARS_SKIP_CPU_CHECK=1`).
 
-| Área | Tests | Estado |
-|------|-------|--------|
-| Yahoo Finance (conectar, datos, orden) | 3 | ✅ |
-| Binance (conectar) | 1 | ✅ |
-| IBKR (conectar) | 1 | ✅ |
-| API endpoints (health, brokers, status) | 4 | ✅ |
-| Scalping signals | 2 | ✅ |
-| Swing signals | 2 | ✅ |
+## Mocking de APIs externas
+
+Para no depender de Yahoo Finance en los tests, se parcha
+`get_historical_data` con un `pl.DataFrame` fijo:
+
+```python
+@patch("app.services.analysis_service.get_historical_data")
+def test_algo(mock_get_data):
+    mock_get_data.return_value = pl.DataFrame({...})
+    result = mi_funcion()
+    assert result["status"] == "ok"
+```
+
+Esto permite testear la lógica sin conexión a internet y
+sin rate limiting de Yahoo.
+
+## Cobertura actual
+
+| Área | Archivos | Estado |
+|------|----------|--------|
+| Analysis router | 9 tests | ✅ |
+| Strategies (scalping + swing) | Tests estructurales | ✅ |
+| BrokerManager + switch | Tests de conexión | ✅ |
+| Config router | CRUD de brokers | ✅ |
+| Prediction service | Persistencia + resolución | ⚠️ 61% |
+| Background analyzer | Sin tests específicos | ❌ |
+| WebSocket manager | Sin tests | ❌ |
+| Frontend (JS) | Sin tests (Playwright pendiente) | ❌ |
 
 ## 📚 Para investigar más
 
@@ -102,4 +148,4 @@ def setup_db():
 | **Cobertura (coverage)** | Medir qué código testeamos | `pytest --cov=app` |
 | **TDD** | Escribir tests antes del código | Buscar "Test Driven Development" |
 | **Test parametrizados** | Un test, múltiples inputs | `@pytest.mark.parametrize` |
-| **Hypothesis** | Tests basados en propiedades | https://hypothesis.readthedocs.io/ |
+| **Playwright** | Tests de frontend (JS) | https://playwright.dev/ |
