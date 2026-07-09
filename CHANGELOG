@@ -1,3 +1,19 @@
+stock-analysis (2.2.0) unstable; urgency=medium
+
+  * [ADD] Documentación completa en docs/: architecture, api-reference, indicators, whatsapp-gateway, frontend, deployment
+  * [ADD] SKILL.md actualizado con stack completo (Node.js 22, Python 3.13), estado actual v2.1.0, convenciones actualizadas
+  * [ADD] docs/api-reference.md: todos los endpoints, schemas, mapeo de intervalos, POPULAR_TICKERS, códigos de error
+  * [ADD] docs/indicators.md: fórmulas detalladas de EMA, RSI, Bollinger, MACD, SMA200, S/R con histograma
+  * [ADD] docs/architecture.md: diagrama de flujo, estructura de directorios, flujo end-to-end, patrones de diseño
+  * [ADD] docs/whatsapp-gateway.md: endpoints del gateway, ciclo de vida de conexión, troubleshooting
+  * [ADD] docs/frontend.md: estructura SPA, funciones clave del JS, WebSocket, chart registry
+  * [ADD] docs/deployment.md: Docker, desarrollo local, CI/CD, variables de entorno, troubleshooting
+  * [FIX] Alignment de docs existentes (ci-cd-guide.md) con estructura actual del proyecto
+  * [CHG] WhatsApp gateway documentado con Node.js 22 + Baileys 6.7
+  * [CHG] DB schema: fix de migración (columnas pnl/pnl_pct faltantes)
+
+  -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 15:30:00 -0300
+
 stock-analysis (2.1.0) unstable; urgency=medium
 
   * [FIX] compute_chart_data: convierte datetime->ISO string; Pydantic no coercionaba datetime a str -> 500

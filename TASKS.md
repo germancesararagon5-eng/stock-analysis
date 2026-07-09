@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 113 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.1.0
+> Estado: 113 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.2.0
 
 ## ✅ Completado
 
@@ -30,6 +30,16 @@
 - [x] **try/except en GET /api/analysis/data/{ticker} y POST /api/analysis/analyze**: evitan 500 si no hay broker o datos
 - [x] **compute_chart_data datetime→str**: convierte datetime a ISO string para que Pydantic valide correctamente
 - [x] **test de regresión con datetime timestamps**: chart endpoint no crashea cuando timestamps son datetime objects
+
+## ✅ Completado (documentación)
+
+- [x] `docs/architecture.md` — arquitectura general, flujo end-to-end, patrones
+- [x] `docs/api-reference.md` — 55+ endpoints, schemas, mapeo de intervalos, POPULAR_TICKERS
+- [x] `docs/indicators.md` — fórmulas de EMA, RSI, Bollinger, MACD, SMA200, S/R, scoring TA
+- [x] `docs/whatsapp-gateway.md` — gateway Node.js + Baileys, ciclo de QR, endpoints, troubleshooting
+- [x] `docs/frontend.md` — SPA vanilla, Chart.js, WebSocket, funciones clave, chart registry
+- [x] `docs/deployment.md` — Docker, desarrollo local, CI/CD, env vars, troubleshooting
+- [x] `SKILL.md` actualizado con stack completo (Node.js 22, Python 3.13), convenciones, estado v2.2.0
 
 ## Alta Prioridad
 

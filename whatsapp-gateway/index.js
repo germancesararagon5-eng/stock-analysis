@@ -5,7 +5,7 @@ import pino from 'pino';
 import { mkdirSync, existsSync } from 'fs';
 
 const SESSION_DIR = './session';
-const PORT = parseInt(process.env.PORT || '3000');
+const PORT = parseInt(process.env.PORT || '3001');
 const logger = pino({ level: 'info', transport: { target: 'pino-pretty' } });
 
 if (!existsSync(SESSION_DIR)) mkdirSync(SESSION_DIR, { recursive: true });
