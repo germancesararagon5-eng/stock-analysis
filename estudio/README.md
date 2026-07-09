@@ -6,11 +6,13 @@
 
 ## Estado actual del proyecto
 
-- **101 tests** pasando · Cobertura 84%
+- **101 tests** pasando · Cobertura 84% · Versión 2.1.0
 - **Estrategias:** scalping (EMA 9/21, RSI, BB), swing (MACD, SMA 200, soportes/resistencias)
 - **Indicadores:** implementados en Polars nativo (sin pandas/ta)
 - **Brokers:** Yahoo Finance (activo), Binance (testnet), Interactive Brokers (placeholder)
 - **Persistencia:** BackgroundResult en DB (no se pierden resultados al reiniciar)
+- **Predicciones centralizadas:** `run_analysis()` es el único punto de almacenamiento
+- **Chart endpoint resiliente:** try/except + respuesta graceful en vez de 500
 
 ## Estructura
 
@@ -19,9 +21,9 @@
 | `01-git-github.md` | Git, GitHub, tokens, repositorios | 2026-07-08 |
 | `02-github-actions.md` | CI/CD con GitHub Actions (el más importante) | 2026-07-08 |
 | `03-docker.md` | Docker, Docker Compose, contenedores | 2026-07-08 |
-| `04-python-fastapi.md` | Python 3.12+, FastAPI, async, endpoints, ThreadPoolExecutor | 2026-07-09 |
+| `04-python-fastapi.md` | Python 3.12+, FastAPI, async, endpoints, ThreadPoolExecutor, chart error handling | 2026-07-09 |
 | `05-bases-de-datos.md` | PostgreSQL, SQLAlchemy, SQLite, migraciones | 2026-07-08 |
-| `06-frontend.md` | SPA vanilla, Chart.js, CDN, DOM | 2026-07-08 |
+| `06-frontend.md` | SPA vanilla, Chart.js, CDN, DOM, sparkline error handling | 2026-07-09 |
 | `07-testing.md` | pytest, TestClient, mocks, cobertura, 101 tests | 2026-07-09 |
 | `08-whatsapp-baileys.md` | WhatsApp gateway, Node.js, Baileys | 2026-07-08 |
 | `09-herramientas.md` | Ruff, linting, formateo, calidad de código | 2026-07-08 |

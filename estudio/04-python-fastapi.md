@@ -264,6 +264,31 @@ class BackgroundResult(Base):
 4. `get_results()` lee de DB con `ORDER BY created_at DESC LIMIT :limit`
 5. Si DB falla, fallback a `self._results` en memoria
 
+## Manejo de Errores en Endpoint de Chart
+
+El endpoint `GET /api/analysis/chart/{ticker}` originalmente no tenía manejo de errores. Cuando `get_historical_data()` fallaba (ej. Yahoo Finance no tiene datos para cierto ticker), FastAPI devolvía un 500 con el mensaje de error, y el frontend mostraba "Datos insuficientes" sin explicación.
+
+**Solución — try/except con respuesta graceful:**
+
+```python
+@router.get("/chart/{ticker}", response_model=ChartResponse)
+def get_chart(ticker: str, ...):
+    try:
+        df = get_historical_data(ticker, interval, periods)
+        series = compute_chart_data(df)
+        result = run_analysis(ticker, ...)
+        return ChartResponse(series=ChartSeries(...), ...)
+    except Exception as e:
+        logger.warning("Chart error for %s: %s", ticker, e)
+        empty = ChartSeries(timestamp=[], close=[], ...)
+        return ChartResponse(
+            ticker=ticker, signal="NEUTRAL", confidence=0.0,
+            reasons=[str(e)], series=empty,
+        )
+```
+
+El error se propaga al frontend vía `reasons[]`, y la UI lo muestra sin romper la experiencia.
+
 ## 📚 Para investigar más
 
 | Tema | Por qué | Dónde |

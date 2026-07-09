@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 101 tests pasando · Login deshabilitado · Stack: Polars nativo
+> Estado: 101 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.1.0
 
 ## ✅ Completado
 
@@ -16,6 +16,10 @@
 - [x] `SKILL.md` actualizado con Polars, top-ranking, login deshabilitado
 - [x] Top ranking: paralelización con ThreadPoolExecutor (evita timeouts de red)
 - [x] Frontend POPULAR_TICKERS sincronizado con backend
+- [x] **Chart endpoint resiliente**: try/except en GET /api/analysis/chart/{ticker} — retorna series vacías + error en vez de 500
+- [x] **Sparkline error real**: drawSparkline muestra el error del backend en vez de "Datos insuficientes" genérico
+- [x] **Top-ranking click-through consistente**: el click pasa periods=100 al formulario de análisis
+- [x] **Predicciones centralizadas**: run_analysis() es el único punto de almacenamiento para todas las rutas
 
 ## Alta Prioridad
 

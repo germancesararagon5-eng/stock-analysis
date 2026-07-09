@@ -1,3 +1,14 @@
+stock-analysis (2.1.0) unstable; urgency=medium
+
+  * [FIX] Chart endpoint: try/except para evitar 500 en tickers sin datos; retorna series vacías + mensaje de error en reasons
+  * [FIX] Frontend sparkline: muestra el error real del backend en vez de genérico "Datos insuficientes"
+  * [FIX] Frontend fetchChart: muestra backend reasons[] cuando series.timestamp está vacío
+  * [FIX] Top-ranking click-through: ahora pasa periods=100 consistentemente al formulario de análisis
+  * [CHG] Coherencia de diseño: las 3 rutas (POST /analyze, GET /chart/{ticker}, GET /top-ranking) usan run_analysis() como único punto de almacenamiento de predicciones
+  * [DOC] TASKS.md, SKILL.md, estudio/ actualizados con entrada de coherencia 2.1.0
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 13:00:00 -0300
+
 stock-analysis (2.0.0) unstable; urgency=medium
 
   * [ADD] Predicciones automáticas: todo análisis se guarda como predicción en DB (run_analysis store_prediction=True)

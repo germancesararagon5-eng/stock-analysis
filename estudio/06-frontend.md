@@ -97,6 +97,50 @@ const data = await api('POST', '/api/analysis/analyze', {
 });
 ```
 
+## Manejo de Errores en Charts
+
+El dashboard tiene dos tipos de charts:
+- **Sparkline** (modal de mercado) — Chart.js en canvas de 140px
+- **Multi-panel chart** (pestaña Análisis) — 3 paneles sincronizados
+
+Ambos llaman al mismo endpoint `GET /api/analysis/chart/{ticker}`.
+
+### Sparkline — drawSparkline()
+
+```javascript
+async function drawSparkline(ticker) {
+  try {
+    const data = await api('GET', `/api/analysis/chart/${ticker}?...`);
+    const series = data.series;
+    if (!series?.timestamp?.length) throw new Error('Sin datos');
+    // render Chart.js ...
+  } catch (e) {
+    // Muestra el error real del backend (no "Datos insuficientes" genérico)
+    ctx.fillText(e.message === 'Sin datos' ? 'Datos insuficientes' : e.message, ...);
+  }
+}
+```
+
+### Multi-panel — fetchChart()
+
+```javascript
+async function fetchChart(ticker, strategy, interval, periods, visible) {
+  try {
+    const data = await api('GET', `/api/analysis/chart/${ticker}?...`);
+    if (!data.series?.timestamp?.length) {
+      // Si el backend devolvió series vacías, muestra el error en reasons[]
+      loading.textContent = data.reasons?.[0] || 'Datos insuficientes';
+      return;
+    }
+    drawChart(data.series, ...);
+  } catch (e) {
+    loading.textContent = 'Error: ' + e.message;
+  }
+}
+```
+
+El backend ahora nunca devuelve 500 para datos faltantes — retorna `{signal:"NEUTRAL", reasons:["mensaje"], series:{timestamp:[], ...}}`. El frontend decide cómo presentarlo.
+
 ## 📚 Para investigar más
 
 | Tema | Por qué | Dónde |
