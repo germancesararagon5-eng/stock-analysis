@@ -8,6 +8,7 @@ psycopg2-binary>=2.9.10
 pydantic>=2.10.0
 pydantic-settings>=2.6.0
 yfinance>=0.2.50
+pyarrow>=17.0.0
 polars[rtcompat]>=1.42.0
 numpy>=1.26.0
 requests>=2.32.0

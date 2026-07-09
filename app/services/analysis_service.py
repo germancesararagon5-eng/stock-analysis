@@ -49,6 +49,8 @@ def get_historical_data(
         if df_pd.empty:
             raise ValueError(f"No historical data for {ticker}")
         df_pd = df_pd.tail(periods)
+        ohlcv_cols = [c for c in ["Open", "High", "Low", "Close", "Volume"] if c in df_pd.columns]
+        df_pd = df_pd[ohlcv_cols]
         df = pl.from_pandas(df_pd.reset_index())
         df = df.rename({df.columns[0]: "timestamp"})
         return df
