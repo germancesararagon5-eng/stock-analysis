@@ -150,6 +150,7 @@ class BackgroundAnalyzer:
                     strategy=strategy,
                     interval=interval,
                     periods=periods,
+                    store_prediction=False,  # BG analyzer stores manually
                 )
                 entry = {
                     "ticker": ticker,
@@ -159,6 +160,19 @@ class BackgroundAnalyzer:
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
                 batch_results.append(entry)
+
+                if entry["confidence"] >= min_conf:
+                    store_prediction(
+                        ticker=ticker,
+                        signal=entry["signal"],
+                        confidence=entry["confidence"],
+                        strategy=strategy,
+                        interval=interval,
+                        periods=periods,
+                        price=entry["price"],
+                        reasons=result.get("reasons", []),
+                        indicators=result.get("indicators"),
+                    )
 
                 if entry["signal"] in ("BUY", "SELL") and entry["confidence"] >= min_conf:
                     reasons = result.get("reasons", [])
@@ -172,17 +186,6 @@ class BackgroundAnalyzer:
                         "ticker": ticker, "signal": entry["signal"],
                         "confidence": entry["confidence"],
                     })
-                    store_prediction(
-                        ticker=ticker,
-                        signal=entry["signal"],
-                        confidence=entry["confidence"],
-                        strategy=strategy,
-                        interval=interval,
-                        periods=periods,
-                        price=entry["price"],
-                        reasons=reasons,
-                        indicators=result.get("indicators"),
-                    )
                     if alert_wa:
                         from app.services.whatsapp_service import send_alert
                         send_alert(msg)

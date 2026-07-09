@@ -67,6 +67,7 @@ def run_analysis(
     interval: str = "5m",
     periods: int = 100,
     notify: bool = False,
+    store_prediction: bool = True,
 ) -> dict[str, Any]:
     min_periods = 200 if strategy == "swing" else 26
     df = get_historical_data(ticker, interval, max(periods, min_periods))
@@ -92,6 +93,24 @@ def run_analysis(
             reasons=result.get("reasons", []),
             raw_data_shape=df.shape,
         )
+
+    # Auto-store every analysis result as a prediction for later resolution
+    if store_prediction:
+        try:
+            from app.services.prediction_service import store_prediction
+            store_prediction(
+                ticker=ticker,
+                signal=result["signal"],
+                confidence=result["confidence"],
+                strategy=strategy,
+                interval=interval,
+                periods=periods,
+                price=result.get("indicators", {}).get("price"),
+                reasons=result.get("reasons", []),
+                indicators=result.get("indicators", {}),
+            )
+        except Exception as e:
+            logger.warning("Failed to auto-store prediction for %s: %s", ticker, e)
 
     if notify and result["signal"] in ("BUY", "SELL"):
         from app.services.whatsapp_service import send_alert

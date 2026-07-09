@@ -26,7 +26,7 @@ def test_get_prediction_stats():
     )
     stats = get_prediction_stats(ticker="STATS")
     assert stats["total"] >= 1
-    assert all(k in stats for k in ("pending", "resolved", "correct"))
+    assert all(k in stats for k in ("pending", "resolved", "correct", "total_pnl", "winning_trades", "losing_trades"))
 
 
 def test_get_prediction_stats_all():
@@ -52,6 +52,9 @@ def test_resolve_predictions_zero():
 def test_get_predictions_no_ticker():
     preds = get_predictions()
     assert isinstance(preds, list)
+    if preds:
+        assert "pnl" in preds[0]
+        assert "pnl_pct" in preds[0]
 
 
 def test_get_predictions_with_offset():

@@ -8,6 +8,7 @@ from app.services.background_analyzer import background_analyzer
 from app.services.prediction_service import (
     get_prediction_stats,
     get_predictions,
+    get_trading_summary,
 )
 from app.services.prediction_service import (
     resolve_predictions as resolve_preds,
@@ -110,9 +111,22 @@ def predictions_stats(ticker: str = Query("", description="Filter by ticker")):
 
 
 @router.post("/predictions/resolve")
-def predictions_resolve(count: int = Query(20, ge=1, le=200)):
-    resolved = resolve_preds(count=count)
+def predictions_resolve(
+    count: int = Query(20, ge=1, le=200),
+    threshold: float = Query(0.0, ge=0.0, le=100.0, description="Min price change % to consider correct"),
+):
+    resolved = resolve_preds(count=count, threshold_pct=threshold)
     return {"resolved": resolved}
+
+
+# ── Trading Simulator ────────────────────────────────────────
+
+@router.get("/trading/summary")
+def trading_summary(ticker: str = Query("", description="Filter by ticker")):
+    kw = {}
+    if ticker.strip():
+        kw["ticker"] = ticker.strip().upper()
+    return get_trading_summary(**kw)
 
 
 # ── WhatsApp Config (Self-Hosted Gateway) ──────────────────

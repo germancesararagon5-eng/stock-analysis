@@ -50,7 +50,10 @@ def store_prediction(
         db.close()
 
 
-def resolve_predictions(count: int = 50) -> int:
+DEFAULT_THRESHOLD_PCT = 0.0  # Minimum price change % to consider correct
+
+
+def resolve_predictions(count: int = 50, threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> int:
     db: Session = SessionLocal()
     try:
         now = datetime.now(timezone.utc)
@@ -71,12 +74,6 @@ def resolve_predictions(count: int = 50) -> int:
         for pred in pending:
             age_limit = min_age_for_interval(pred.interval or "5m")
             if pred.created_at and pred.created_at > now - age_limit:
-                logger.info(
-                    "Prediction %d %s too young (age=%s, min=%s)",
-                    pred.id, pred.ticker,
-                    (now - pred.created_at) if pred.created_at else "?",
-                    age_limit,
-                )
                 continue
             try:
                 from app.services.analysis_service import run_analysis
@@ -96,16 +93,23 @@ def resolve_predictions(count: int = 50) -> int:
                 pred.price_change_pct = round(change_pct, 2)
                 pred.resolved_at = datetime.now(timezone.utc)
 
+                meets_threshold = abs(change_pct) >= threshold_pct
+
                 if pred.signal == "BUY":
-                    pred.outcome = "CORRECT" if change_pct > 0 else "INCORRECT"
+                    pred.outcome = "CORRECT" if change_pct > 0 and meets_threshold else "INCORRECT"
+                    pred.pnl = round(current_price - pred.price_at_prediction, 2)
                 elif pred.signal == "SELL":
-                    pred.outcome = "CORRECT" if change_pct < 0 else "INCORRECT"
+                    pred.outcome = "CORRECT" if change_pct < 0 and meets_threshold else "INCORRECT"
+                    pred.pnl = round(pred.price_at_prediction - current_price, 2)
                 else:
                     pred.outcome = "NEUTRAL"
+                    pred.pnl = 0.0
+
+                pred.pnl_pct = round(pred.pnl / pred.price_at_prediction * 100, 2) if pred.price_at_prediction else 0.0
 
                 logger.info(
-                    "Prediction %d resolved: %s (%+.2f%%)",
-                    pred.id, pred.outcome, change_pct,
+                    "Prediction %d resolved: %s (%+.2f%%, PnL=%+.2f)",
+                    pred.id, pred.outcome, change_pct, pred.pnl or 0,
                 )
                 resolved += 1
             except Exception as e:
@@ -128,11 +132,20 @@ def get_prediction_stats(ticker: Optional[str] = None) -> dict:
         if ticker:
             q = q.filter(Prediction.ticker == ticker.upper())
         total = q.count()
-        resolved = q.filter(Prediction.outcome.in_(["CORRECT", "INCORRECT"])).count()
+        resolved_q = q.filter(Prediction.outcome.in_(["CORRECT", "INCORRECT"]))
+        resolved = resolved_q.count()
         correct = q.filter(Prediction.outcome == "CORRECT").count()
         pending = q.filter(Prediction.outcome == "PENDING").count()
-
         accuracy = round((correct / resolved * 100), 1) if resolved > 0 else 0.0
+
+        total_pnl = 0.0
+        for r in resolved_q.all():
+            if r.pnl is not None:
+                total_pnl += r.pnl
+        total_pnl = round(total_pnl, 2)
+
+        winning_trades = q.filter(Prediction.outcome == "CORRECT").count()
+        losing_trades = q.filter(Prediction.outcome == "INCORRECT").count()
 
         return {
             "total": total,
@@ -140,6 +153,70 @@ def get_prediction_stats(ticker: Optional[str] = None) -> dict:
             "correct": correct,
             "pending": pending,
             "accuracy_pct": accuracy,
+            "total_pnl": total_pnl,
+            "winning_trades": winning_trades,
+            "losing_trades": losing_trades,
+        }
+    finally:
+        db.close()
+
+
+def get_trading_summary(ticker: Optional[str] = None) -> dict:
+    db: Session = SessionLocal()
+    try:
+        q = db.query(Prediction).filter(Prediction.outcome.in_(["CORRECT", "INCORRECT"]))
+        if ticker:
+            q = q.filter(Prediction.ticker == ticker.upper())
+
+        rows = q.order_by(Prediction.created_at.desc()).limit(1000).all()
+        total_pnl = 0.0
+        wins = 0
+        losses = 0
+        total_win_pnl = 0.0
+        total_loss_pnl = 0.0
+        trades = []
+
+        for r in rows:
+            pnl_val = r.pnl or 0.0
+            total_pnl += pnl_val
+            if r.outcome == "CORRECT":
+                wins += 1
+                total_win_pnl += pnl_val
+            else:
+                losses += 1
+                total_loss_pnl += pnl_val
+
+            trades.append({
+                "id": r.id,
+                "ticker": r.ticker,
+                "signal": r.signal,
+                "confidence": r.confidence,
+                "entry_price": r.price_at_prediction,
+                "exit_price": r.price_at_outcome,
+                "pnl": pnl_val,
+                "pnl_pct": r.pnl_pct,
+                "outcome": r.outcome,
+                "strategy": r.strategy,
+                "interval": r.interval,
+                "entered_at": r.created_at.isoformat() if r.created_at else None,
+                "exited_at": r.resolved_at.isoformat() if r.resolved_at else None,
+            })
+
+        total = wins + losses
+        win_rate = round((wins / total * 100), 1) if total > 0 else 0.0
+        avg_win = round(total_win_pnl / wins, 2) if wins > 0 else 0.0
+        avg_loss = round(total_loss_pnl / losses, 2) if losses > 0 else 0.0
+
+        return {
+            "total_trades": total,
+            "wins": wins,
+            "losses": losses,
+            "win_rate_pct": win_rate,
+            "total_pnl": round(total_pnl, 2),
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "profit_factor": round(abs(total_win_pnl / total_loss_pnl), 2) if total_loss_pnl != 0 else 0.0,
+            "trades": trades[:50],
         }
     finally:
         db.close()
@@ -169,6 +246,8 @@ def get_predictions(
                 "outcome": r.outcome or "PENDING",
                 "price_at_outcome": r.price_at_outcome,
                 "price_change_pct": r.price_change_pct,
+                "pnl": r.pnl,
+                "pnl_pct": r.pnl_pct,
                 "created_at": r.created_at.isoformat() if r.created_at else None,
                 "resolved_at": r.resolved_at.isoformat() if r.resolved_at else None,
             }

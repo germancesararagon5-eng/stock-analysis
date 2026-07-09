@@ -251,6 +251,13 @@ pre.log { background: var(--bg); padding: 12px; border-radius: 6px;
 #pred-stats-grid { display: flex; }
 #pred-stats-grid .stat-mini:last-child .stat-mini-val { color: var(--accent); }
 
+#trade-stats-grid { display: flex; flex-wrap: wrap; }
+#trade-stats-grid .stat-mini:nth-child(4) .stat-mini-val { color: var(--accent); }
+#trade-list table { width: 100%; font-size: 12px; }
+#trade-list td, #trade-list th { padding: 4px 6px; }
+.pnl-pos { color: var(--green); }
+.pnl-neg { color: var(--red); }
+
 @media (max-width: 768px) {
   header { flex-wrap: wrap; }
   nav { margin-left: 0; width: 100%; justify-content: center; }

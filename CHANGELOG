@@ -1,3 +1,16 @@
+stock-analysis (2.0.0) unstable; urgency=medium
+
+  * [ADD] Predicciones automáticas: todo análisis se guarda como predicción en DB (run_analysis store_prediction=True)
+  * [ADD] Simulador de trading: panel P&L, win rate, profit factor, historial de trades
+  * [ADD] P&L tracking: cada predicción resuelta calcula ganancia/pérdida simulada
+  * [ADD] GET /api/options/trading/summary — endpoint de estadísticas de trading
+  * [CHG] resolve_predictions ahora acepta threshold_pct mínimo para considerar acierto
+  * [CHG] background_analyzer guarda TODAS las señales (no solo BUY/SELL) como predicciones
+  * [ADD] Frontend: panel de Simulador de Trading en pestaña Opciones
+  * [DOC] TASKS.md, SKILL.md, estudio/ actualizados
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 12:00:00 -0300
+
 stock-analysis (1.7.0) unstable; urgency=medium
 
   * [FIX] Top ranking: paralelización con ThreadPoolExecutor para evitar timeouts (reducido de ~27s a ~6s)

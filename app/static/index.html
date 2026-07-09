@@ -429,6 +429,47 @@
     <pre class="log" id="pred-raw" style="display:none"></pre>
   </div>
 
+  <!-- ── Trading Simulator ── -->
+  <div class="card" id="trade-summary-card" style="display:none">
+    <h2>
+      📊 Simulador de Trading
+      <span class="info-wrap">
+        <span class="info-trigger" title="¿Qué es esto?">i</span>
+        <div class="info-popup">
+          <h3>Simulación de Ganancias/Pérdidas</h3>
+          <p>Basado en las predicciones BUY/SELL resueltas. Cada señal se simula como una operación: si la predicción fue CORRECTA, la operación fue ganadora; si fue INCORRECTA, fue perdedora. El P&L se calcula como la diferencia entre precio de entrada y salida.</p>
+        </div>
+      </span>
+    </h2>
+    <div class="row" id="trade-stats-grid" style="gap:8px;margin-bottom:12px">
+      <div class="stat-mini"><span class="stat-mini-val" id="trade-total">0</span><span class="stat-mini-lbl">Operaciones</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="trade-wins" style="color:var(--green)">0</span><span class="stat-mini-lbl">Ganadas</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="trade-losses" style="color:var(--red)">0</span><span class="stat-mini-lbl">Perdidas</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="trade-winrate" style="font-size:28px;color:var(--accent)">0%</span><span class="stat-mini-lbl">Win Rate</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="trade-pnl" style="font-size:28px">$0</span><span class="stat-mini-lbl">P&L Total</span></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">
+        Filtro ticker:
+        <input type="text" id="trade-filter" placeholder="AAPL" style="width:100px;margin:0" value="">
+      </label>
+      <button class="btn outline sm" id="trade-filter-btn">Filtrar</button>
+      <span style="font-size:11px;color:var(--muted);margin-left:auto">
+        Prom. Ganancia: <span id="trade-avg-win">$0</span> ·
+        Prom. Pérdida: <span id="trade-avg-loss">$0</span> ·
+        Factor: <span id="trade-profit-factor">0</span>
+      </span>
+    </div>
+    <div id="trade-list" style="max-height:400px;overflow-y:auto">
+      <table>
+        <thead><tr>
+          <th>Ticker</th><th>Señal</th><th>Entrada</th><th>Salida</th><th>P&L</th><th>Rend.</th><th>Resultado</th><th>Fecha</th>
+        </tr></thead>
+        <tbody id="trade-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ── WhatsApp Config (Self-Hosted Gateway) ── -->
   <div class="card" id="wa-config-card">
     <h2>

@@ -1533,6 +1533,53 @@ async function resolvePendingPredictions() {
   const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
   loadPredictionStats(ticker);
   loadPredictions(ticker);
+  loadTradingSummary();
+}
+
+// ── Trading Simulator ──────────────────────────────────────
+
+async function loadTradingSummary(ticker) {
+  try {
+    let url = '/api/options/trading/summary';
+    if (ticker) url += '?ticker=' + encodeURIComponent(ticker);
+    const s = await api('GET', url);
+    const card = document.getElementById('trade-summary-card');
+    if (!s.total_trades) {
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = 'block';
+    document.getElementById('trade-total').textContent = s.total_trades;
+    document.getElementById('trade-wins').textContent = s.wins;
+    document.getElementById('trade-losses').textContent = s.losses;
+    document.getElementById('trade-winrate').textContent = s.win_rate_pct + '%';
+    document.getElementById('trade-pnl').textContent = (s.total_pnl >= 0 ? '+' : '') + s.total_pnl;
+    document.getElementById('trade-pnl').style.color = s.total_pnl >= 0 ? 'var(--green)' : 'var(--red)';
+    document.getElementById('trade-avg-win').textContent = '$' + s.avg_win;
+    document.getElementById('trade-avg-loss').textContent = '$' + Math.abs(s.avg_loss);
+    document.getElementById('trade-profit-factor').textContent = s.profit_factor || '∞';
+
+    const tbody = document.getElementById('trade-tbody');
+    tbody.innerHTML = (s.trades || []).map(t => {
+      const entry = t.entry_price ? '$' + t.entry_price.toFixed(2) : '—';
+      const exit = t.exit_price ? '$' + t.exit_price.toFixed(2) : '—';
+      const pnlCls = t.pnl >= 0 ? 'pnl-pos' : 'pnl-neg';
+      const pnlStr = (t.pnl >= 0 ? '+' : '') + (t.pnl ? t.pnl.toFixed(2) : '0');
+      const pnlPctStr = t.pnl_pct ? ((t.pnl_pct >= 0 ? '+' : '') + t.pnl_pct.toFixed(2) + '%') : '—';
+      const outcomeLabel = t.outcome === 'CORRECT' ? '✅ Ganada' : '❌ Perdida';
+      const outcomeCls = t.outcome === 'CORRECT' ? 'buy' : 'sell';
+      return `<tr>
+        <td><strong>${t.ticker}</strong></td>
+        <td><span class="badge ${t.signal === 'BUY' ? 'buy' : 'sell'}">${t.signal}</span></td>
+        <td>${entry}</td>
+        <td>${exit}</td>
+        <td class="${pnlCls}">${pnlStr}</td>
+        <td class="${pnlCls}">${pnlPctStr}</td>
+        <td><span class="badge ${outcomeCls}">${outcomeLabel}</span></td>
+        <td style="font-size:11px;color:var(--muted)">${t.exited_at ? new Date(t.exited_at).toLocaleString() : '—'}</td>
+      </tr>`;
+    }).join('');
+  } catch (_) {}
 }
 
 function startOptionsPoll() {
@@ -1542,6 +1589,7 @@ function startOptionsPoll() {
     loadBackgroundResults();
     const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
     loadPredictionStats(ticker);
+    loadTradingSummary();
   }, 5000);
 }
 function stopOptionsPoll() {
@@ -1607,6 +1655,13 @@ function initApp() {
     loadPredictions(ticker);
   });
   document.getElementById('pred-resolve-btn').addEventListener('click', resolvePendingPredictions);
+
+  // ── Trading Simulator ──
+  loadTradingSummary();
+  document.getElementById('trade-filter-btn').addEventListener('click', () => {
+    const ticker = document.getElementById('trade-filter').value.trim().toUpperCase();
+    loadTradingSummary(ticker);
+  });
 
   // ── Modal close on overlay click ──
   document.getElementById('modal-overlay').addEventListener('click', e => {

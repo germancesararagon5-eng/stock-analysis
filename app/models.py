@@ -70,6 +70,8 @@ class Prediction(Base):
     outcome = Column(String(10), nullable=True, index=True)
     price_at_outcome = Column(Float, nullable=True)
     price_change_pct = Column(Float, nullable=True)
+    pnl = Column(Float, nullable=True)
+    pnl_pct = Column(Float, nullable=True)
     resolved_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
