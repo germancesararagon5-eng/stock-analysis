@@ -506,9 +506,10 @@ async function drawSparkline(ticker) {
   } catch (e) {
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#8b949e';
-    ctx.font = '16px sans-serif';
+    ctx.font = '14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('Datos insuficientes', canvas.width/2, canvas.height/2);
+    const msg = e.message === 'Sin datos' ? 'Datos insuficientes' : e.message;
+    ctx.fillText(msg, canvas.width/2, canvas.height/2);
   }
 }
 
@@ -891,13 +892,18 @@ async function fetchChart(ticker, strategy, interval, periods, visible) {
       api('POST', `/api/analysis/technical-analysis?ticker=${encodeURIComponent(ticker)}&strategy=${strategy}&interval=${interval}&periods=${periods}`).catch(() => null),
     ]);
     document.getElementById('chart-loading').style.display = 'none';
+    if (!data.series?.timestamp?.length) {
+      document.getElementById('chart-loading').style.display = 'block';
+      document.getElementById('chart-loading').textContent = data.reasons?.[0] || 'Datos insuficientes';
+      return;
+    }
     drawChart(data.series, strategy, visible);
     const analysisContainer = document.getElementById('chart-analysis');
     if (analysisContainer && analysis) {
       renderTechnicalAnalysis(analysisContainer, analysis);
     }
   } catch (e) {
-    document.getElementById('chart-loading').textContent = 'Error al cargar gráfico: ' + e.message;
+    document.getElementById('chart-loading').textContent = 'Error: ' + e.message;
   }
 }
 
@@ -1141,7 +1147,7 @@ async function loadTopRanking() {
         const color = isBuy ? 'var(--green)' : isSell ? 'var(--red)' : 'var(--muted)';
         const pct = (r.confidence * 100).toFixed(0);
         const reasons = (r.reasons || []).slice(0, 2).join(' · ');
-        return `<div class="tr-item" data-ticker="${r.ticker}" data-strategy="${strategy}" data-interval="${interval}" style="background:var(--bg);border-radius:8px;border:1px solid var(--border);padding:12px;cursor:pointer;transition:.15s;position:relative">
+        return `<div class="tr-item" data-ticker="${r.ticker}" data-strategy="${strategy}" data-interval="${interval}" data-periods="100" style="background:var(--bg);border-radius:8px;border:1px solid var(--border);padding:12px;cursor:pointer;transition:.15s;position:relative">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
             <div>
               <strong style="font-size:16px;color:var(--text)">${r.ticker}</strong>
@@ -1171,9 +1177,11 @@ async function loadTopRanking() {
         const ticker = el.dataset.ticker;
         const strat = el.dataset.strategy;
         const intv = el.dataset.interval;
+        const per = el.dataset.periods || 100;
         document.getElementById('an-ticker').value = ticker;
         document.getElementById('an-strategy').value = strat;
         document.getElementById('an-interval').value = intv;
+        document.getElementById('an-periods').value = per;
         // Trigger autocomplete clear
         const ac = document.getElementById('an-ticker');
         ac.dispatchEvent(new Event('input'));

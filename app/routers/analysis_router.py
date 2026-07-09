@@ -50,39 +50,57 @@ def get_chart(
     interval: str = Query("1d"),
     periods: int = Query(60, ge=20, le=500),
 ):
-    chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
-    df = get_historical_data(ticker, interval, chart_periods)
-    series = compute_chart_data(df)
+    try:
+        chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
+        df = get_historical_data(ticker, interval, chart_periods)
+        series = compute_chart_data(df)
 
-    result = run_analysis(
-        ticker=ticker,
-        strategy=strategy,
-        interval=interval,
-        periods=periods,
-    )
+        result = run_analysis(
+            ticker=ticker,
+            strategy=strategy,
+            interval=interval,
+            periods=periods,
+        )
 
-    return ChartResponse(
-        ticker=result["ticker"],
-        strategy=result["strategy"],
-        interval=result.get("interval", interval),
-        signal=result["signal"],
-        confidence=result["confidence"],
-        indicators=result.get("indicators", {}),
-        reasons=result.get("reasons", []),
-        series=ChartSeries(
-            timestamp=series["timestamp"],
-            close=series["close"],
-            ema_9=series["ema_9"],
-            ema_21=series["ema_21"],
-            bb_upper=series["bb_upper"],
-            bb_mid=series["bb_mid"],
-            bb_lower=series["bb_lower"],
-            rsi_14=series["rsi_14"],
-            macd=series.get("macd", []),
-            macd_signal=series.get("macd_signal", []),
-            macd_histogram=series.get("macd_histogram", []),
-        ),
-    )
+        return ChartResponse(
+            ticker=result["ticker"],
+            strategy=result["strategy"],
+            interval=result.get("interval", interval),
+            signal=result["signal"],
+            confidence=result["confidence"],
+            indicators=result.get("indicators", {}),
+            reasons=result.get("reasons", []),
+            series=ChartSeries(
+                timestamp=series["timestamp"],
+                close=series["close"],
+                ema_9=series["ema_9"],
+                ema_21=series["ema_21"],
+                bb_upper=series["bb_upper"],
+                bb_mid=series["bb_mid"],
+                bb_lower=series["bb_lower"],
+                rsi_14=series["rsi_14"],
+                macd=series.get("macd", []),
+                macd_signal=series.get("macd_signal", []),
+                macd_histogram=series.get("macd_histogram", []),
+            ),
+        )
+    except Exception as e:
+        logger.warning("Chart error for %s: %s", ticker, e)
+        empty = ChartSeries(
+            timestamp=[], close=[], ema_9=[], ema_21=[],
+            bb_upper=[], bb_mid=[], bb_lower=[], rsi_14=[],
+            macd=[], macd_signal=[], macd_histogram=[],
+        )
+        return ChartResponse(
+            ticker=ticker,
+            strategy=strategy,
+            interval=interval,
+            signal="NEUTRAL",
+            confidence=0.0,
+            indicators={},
+            reasons=[str(e)],
+            series=empty,
+        )
 
 
 @router.get("/data/{ticker}", response_model=DataResponse)
