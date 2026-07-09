@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from app.core.debug import debug
+from app.database import SessionLocal
+from app.models import BackgroundResult
 from app.services.analysis_service import run_analysis
 from app.services.prediction_service import resolve_predictions, store_prediction
 
@@ -79,8 +81,35 @@ class BackgroundAnalyzer:
         return {"status": "stopped"}
 
     def get_results(self, limit: int = 20) -> list[dict]:
-        with self._lock:
-            return list(self._results[-limit:])
+        try:
+            db = SessionLocal()
+            try:
+                rows = (
+                    db.query(BackgroundResult)
+                    .order_by(BackgroundResult.created_at.desc())
+                    .limit(limit)
+                    .all()
+                )
+                return [
+                    {
+                        "ticker": r.ticker,
+                        "signal": r.signal,
+                        "confidence": r.confidence,
+                        "price": r.price,
+                        "strategy": r.strategy,
+                        "interval": r.interval,
+                        "periods": r.periods,
+                        "created_at": r.created_at.isoformat() if r.created_at else None,
+                    }
+                    for r in rows
+                    if r.error is None
+                ]
+            finally:
+                db.close()
+        except Exception:
+            logger.exception("Error reading background results from DB")
+            with self._lock:
+                return list(self._results[-limit:])
 
     def _loop(self):
         logger.info("Background analyzer loop started")
@@ -173,6 +202,28 @@ class BackgroundAnalyzer:
                 logger.info("Resolved %d predictions", resolved)
         except Exception as e:
             logger.warning("Prediction resolution error: %s", e)
+
+        # Persist batch results to DB
+        try:
+            db = SessionLocal()
+            try:
+                for entry in batch_results:
+                    record = BackgroundResult(
+                        ticker=entry["ticker"],
+                        signal=entry.get("signal", "NEUTRAL"),
+                        confidence=entry.get("confidence", 0.0),
+                        price=entry.get("price"),
+                        strategy=strategy,
+                        interval=interval,
+                        periods=periods,
+                        error=entry.get("error"),
+                    )
+                    db.add(record)
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning("Failed to persist background results to DB: %s", e)
 
         with self._lock:
             self._results.extend(batch_results)

@@ -83,6 +83,28 @@ os.environ.setdefault("DATABASE_URL_SYNC", "sqlite:///./test.db")
 - Los tests arrancan al instante
 - En CI no necesitamos Postgres para tests unitarios
 
+## Persistencia de Resultados (Background Analyzer)
+
+Para que los resultados del análisis en background sobrevivan a reinicios del servidor, se agregó el modelo `BackgroundResult`:
+
+```python
+# app/models.py
+class BackgroundResult(Base):
+    __tablename__ = "background_results"
+    id = Column(Integer, primary_key=True, index=True)
+    ticker = Column(String(20), nullable=False, index=True)
+    signal  = Column(String(10), nullable=False)
+    confidence = Column(Float, default=0.0)
+    price = Column(Float, nullable=True)
+    strategy = Column(String(50), default="scalping")
+    interval = Column(String(10), default="5m")
+    periods = Column(Integer, default=100)
+    error = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+```
+
+**¿Por qué no Alembic?** Por ahora `init_db()` llama a `Base.metadata.create_all()` que crea tablas automáticamente. Si el proyecto escala, migrar a Alembic.
+
 ## 📚 Para investigar más
 
 | Tema | Por qué | Dónde |

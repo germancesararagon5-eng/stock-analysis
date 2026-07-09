@@ -1,3 +1,27 @@
+stock-analysis (1.6.0) unstable; urgency=medium
+
+  * [ADD] BackgroundResult model: resultados persistentes en DB (no se pierden al reiniciar)
+  * [CHG] background_analyzer ahora persiste batch_results en DB al final de cada ciclo
+  * [CHG] get_results lee de DB con fallback a _results in-memory si DB falla
+  * [CHG] TASKS.md actualizado con prioridades post-migración
+  * [DOC] CHANGELOG actualizado hasta 1.6.0
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 01:30:00 -0300
+
+stock-analysis (1.5.0) unstable; urgency=medium
+
+  * [ADD] Top ranking por confianza: GET /api/analysis/top-ranking con chart + indicadores toggleables (BB, EMA, RSI, MACD)
+  * [ADD] Frontend: botones Comprar/Vender en detalle de análisis con prompt de cantidad
+  * [ADD] Login deshabilitado: auth_router no incluido en main.py, pantalla auth removida, JS auth removido
+  * [ADD] Migración pandas+ta → Polars nativo en strategies.py + analysis_service.py
+  * [ADD] pyarrow + polars[rtcompat] reemplazan pandas+ta en requirements.txt
+  * [CHG] SKILL.md actualizado con Polars, top-ranking, login deshabilitado
+  * [FIX] pl.from_pandas requiere pyarrow: filtro OHLCV para evitar columnas no numéricas
+  * [FIX] Tests: 101 pasando, 5 skip (auth), 3 nuevos (top_ranking)
+  * [DOC] estudio/04-python-fastapi.md: sección Polars nativo + ejemplo concreto
+
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 01:00:00 -0300
+
 stock-analysis (1.4.0) unstable; urgency=medium
 
   * [ADD] Magic Link: login sin password via email (smtplib nativo)

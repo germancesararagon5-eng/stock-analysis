@@ -74,6 +74,21 @@ class Prediction(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class BackgroundResult(Base):
+    __tablename__ = "background_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticker = Column(String(20), nullable=False, index=True)
+    signal = Column(String(10), nullable=False)
+    confidence = Column(Float, default=0.0)
+    price = Column(Float, nullable=True)
+    strategy = Column(String(50), default="scalping")
+    interval = Column(String(10), default="5m")
+    periods = Column(Integer, default=100)
+    error = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
 class WhatsAppConfig(Base):
     __tablename__ = "whatsapp_configs"
 

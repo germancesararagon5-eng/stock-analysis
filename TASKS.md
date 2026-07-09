@@ -1,26 +1,36 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 106 tests pasando · Cobertura 84%
+> Estado: 101 tests pasando · Login deshabilitado · Stack: Polars nativo
+
+## ✅ Completado
+
+- [x] Migración pandas+ta → **Polars nativo** (`strategies.py`, `analysis_service.py`)
+- [x] **Top ranking** por confianza: endpoint + frontend con chart + indicadores toggleables + botones Comprar/Vender
+- [x] **Login deshabilitado**: auth_router no incluido, pantalla auth removida, JS auth removido, tests skip
+- [x] **Persistencia background analyzer**: modelo `BackgroundResult` en DB, get_results lee de DB
+- [x] **Anchored summaries** activados en opencode.json para no perder contexto entre sesiones
+- [x] `estudio/04-python-fastapi.md` actualizado con Polars
+- [x] `SKILL.md` actualizado con Polars, top-ranking, login deshabilitado
 
 ## Alta Prioridad
 
-- [ ] Tests de lógica real para estrategias (scalping y swing)
+- [ ] Tests de lógica real para estrategias (scalping y swing con Polars)
   - RSI < 30 → señal BUY + razón "sobrevendido"
   - RSI > 70 → señal SELL + razón "sobrecomprado"
   - EMA9 > EMA21 (golden cross) → BUY
   - EMA9 < EMA21 (death cross) → SELL
+- [ ] Tests de top-ranking endpoint
+- [ ] Tests de persistencia BackgroundResult
 - [ ] Subir cobertura `prediction_service.py` (61%)
-- [ ] Subir cobertura `technical_analysis.py` (64%)
 
 ## Media Prioridad
 
-- [ ] Subir cobertura `background_analyzer.py` (76%)
+- [ ] Subir cobertura `background_analyzer.py`
 - [ ] Tests de integración con broker (yahoo_finance)
 - [ ] Tests de WebSocket (ws_manager)
-- [ ] Tests de autenticación (auth_router + auth_service)
+- [ ] Tests de frontend (JavaScript con Playwright)
 
 ## Baja Prioridad
 
-- [ ] Tests de frontend (JavaScript)
-- [ ] Documentación OpenAPI
+- [ ] Documentación OpenAPI (Swagger)
 - [ ] Docker compose tests
