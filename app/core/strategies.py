@@ -208,6 +208,11 @@ def compute_chart_data(df: pl.DataFrame) -> dict:
     c = df["Close"]
     timestamps = df.get_column("timestamp").to_list() if "timestamp" in df.columns else []
 
+    valid_mask = [v is not None for v in c]
+    close_vals = [round(float(v), 2) for v in c if v is not None]
+    if len(close_vals) != len(timestamps):
+        timestamps = [t for t, keep in zip(timestamps, valid_mask) if keep]
+
     ema9 = c.ewm_mean(span=9, adjust=False)
     ema21 = c.ewm_mean(span=21, adjust=False)
     rsi = _rsi(c, 14)
@@ -224,7 +229,7 @@ def compute_chart_data(df: pl.DataFrame) -> dict:
 
     return {
         "timestamp": timestamps,
-        "close": [round(float(v), 2) for v in c if v is not None],
+        "close": close_vals,
         "ema_9": _to_series(ema9),
         "ema_21": _to_series(ema21),
         "bb_upper": _to_series(bb_upper),

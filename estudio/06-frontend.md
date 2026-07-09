@@ -37,6 +37,44 @@ Dashboard │ Análisis │ Alertas │ Opciones │ Depuración
 
 Cada tab es un `div` que se oculta/muestra con JavaScript.
 
+### La función api() — manejo robusto de errores
+
+La función `api()` del frontend es la puerta de entrada a todos los endpoints. Originalmente no manejaba errores:
+
+```javascript
+// ❌ Original — crashea si el server devuelve HTML
+async function api(method, path, body) {
+  const res = await fetch(path, opts);
+  return res.json();  // "unexpected character line 1" si no es JSON
+}
+```
+
+**Problema:** Si el servidor devuelve HTML (404, 500, proxy error), `res.json()` lanza "unexpected character line 1" porque intenta parsear `<html>...</html>` como JSON.
+
+**Solución:** Validar `Content-Type` antes de parsear:
+
+```javascript
+// ✅ Robusta — verifica que la respuesta sea JSON
+async function api(method, path, body) {
+  const opts = { method };
+  if (body) {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(path, opts);
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    throw new Error('Respuesta no JSON: ' + (text.substring(0, 120) || 'vacía'));
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+  return data;
+}
+```
+
+**Lección:** Siempre verificar que la respuesta sea del tipo esperado antes de transformarla.
+
 ### Autocomplete Inteligente
 
 ```javascript

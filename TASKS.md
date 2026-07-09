@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 101 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.1.0
+> Estado: 112 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.1.0
 
 ## ✅ Completado
 
@@ -20,6 +20,12 @@
 - [x] **Sparkline error real**: drawSparkline muestra el error del backend en vez de "Datos insuficientes" genérico
 - [x] **Top-ranking click-through consistente**: el click pasa periods=100 al formulario de análisis
 - [x] **Predicciones centralizadas**: run_analysis() es el único punto de almacenamiento para todas las rutas
+- [x] **Chart Registry** (`app/core/chart_registry.py`): todos los charts registrados con ChartDef
+- [x] **Chart tests parametrizados** (`tests/test_charts.py`): 11 tests (estructura, vacío, error, coherencia)
+- [x] **Frontend api() robusta**: valida Content-Type antes de JSON.parse()
+- [x] **try/except en technical_analysis endpoint**: evita 500 con datos faltantes
+- [x] **compute_chart_data timestamp alignment**: timestamps se filtran cuando close tiene None
+- [x] **SKILL.md**: nuevo workflow de 8 pasos (análisis → opciones → code → test → fix → doc → commit → push)
 
 ## Alta Prioridad
 

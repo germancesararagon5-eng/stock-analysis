@@ -197,7 +197,15 @@ def technical_analysis(
 ):
     from app.services.technical_analysis import analyze_series
 
-    chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
-    df = get_historical_data(ticker, interval, chart_periods)
-    series = compute_chart_data(df)
-    return analyze_series(series, ticker)
+    try:
+        chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
+        df = get_historical_data(ticker, interval, chart_periods)
+        series = compute_chart_data(df)
+        return analyze_series(series, ticker)
+    except Exception as e:
+        logger.warning("Technical analysis error for %s: %s", ticker, e)
+        return {
+            "ticker": ticker, "strategy": strategy, "interval": interval,
+            "verdict": "NEUTRAL", "confidence": 0, "signals": [],
+            "summary": str(e), "error": str(e),
+        }

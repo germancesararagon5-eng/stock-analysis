@@ -289,6 +289,39 @@ def get_chart(ticker: str, ...):
 
 El error se propaga al frontend vía `reasons[]`, y la UI lo muestra sin romper la experiencia.
 
+**Misma protección se aplicó a `POST /api/analysis/technical-analysis`:**
+
+```python
+@router.post("/technical-analysis")
+def technical_analysis(ticker, strategy, interval, periods):
+    try:
+        df = get_historical_data(ticker, interval, periods)
+        series = compute_chart_data(df)
+        return analyze_series(series, ticker)
+    except Exception as e:
+        logger.warning("Technical analysis error: %s", e)
+        return {"verdict": "NEUTRAL", "confidence": 0, "error": str(e)}
+```
+
+## compute_chart_data — Alineación de Arrays
+
+Un bug sutil en `compute_chart_data()`: la lista `close` filtraba valores `None` con `if v is not None`, pero `timestamps` **no** se filtraba. Si una fila de Yahoo Finance tenía `Close = None` (raro, pero posible), los arrays quedaban con longitudes distintas:
+
+```python
+# ❌ Antes: timestamps y close pueden tener distinto largo
+"timestamp": timestamps,                          # 5 elementos
+"close": [round(float(v), 2) for v in c if v is not None],  # 4 elementos
+```
+
+**Fix:** aplicar el mismo filtro a timestamps:
+
+```python
+valid_mask = [v is not None for v in c]
+close_vals = [round(float(v), 2) for v in c if v is not None]
+if len(close_vals) != len(timestamps):
+    timestamps = [t for t, keep in zip(timestamps, valid_mask) if keep]
+```
+
 ## 📚 Para investigar más
 
 | Tema | Por qué | Dónde |

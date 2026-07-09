@@ -1,6 +1,27 @@
 const API = '';
 
 // ════════════════════════════════════════════════════════════════
+//  API HELPER
+// ════════════════════════════════════════════════════════════════
+
+async function api(method, path, body) {
+  const opts = { method };
+  if (body) {
+    opts.headers = { 'Content-Type': 'application/json' };
+    opts.body = JSON.stringify(body);
+  }
+  const res = await fetch(API + path, opts);
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await res.text();
+    throw new Error('Respuesta no JSON del servidor: ' + (res.status || '') + ' ' + (text.substring(0, 120) || 'vacía'));
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || data.error || res.statusText);
+  return data;
+}
+
+// ════════════════════════════════════════════════════════════════
 //  POPULAR TICKERS
 // ════════════════════════════════════════════════════════════════
 const POPULAR_TICKERS = [
@@ -135,14 +156,6 @@ function connectWebSocket() {
 }
 
 /* ── Auth (deshabilitado temporalmente) ──────────── */
-
-async function api(method, path, body) {
-  const headers = { 'Content-Type': 'application/json' };
-  const opts = { method, headers };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
-  return res.json();
-}
 
 function showTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));

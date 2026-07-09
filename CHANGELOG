@@ -5,9 +5,16 @@ stock-analysis (2.1.0) unstable; urgency=medium
   * [FIX] Frontend fetchChart: muestra backend reasons[] cuando series.timestamp está vacío
   * [FIX] Top-ranking click-through: ahora pasa periods=100 consistentemente al formulario de análisis
   * [CHG] Coherencia de diseño: las 3 rutas (POST /analyze, GET /chart/{ticker}, GET /top-ranking) usan run_analysis() como único punto de almacenamiento de predicciones
-  * [DOC] TASKS.md, SKILL.md, estudio/ actualizados con entrada de coherencia 2.1.0
+  * [FIX] Frontend api() robusta: valida Content-Type: application/json antes de res.json() — evita "unexpected character line 1"
+  * [FIX] technical_analysis endpoint: try/except para evitar 500 con Yahoo Finance vacío
+  * [FIX] compute_chart_data: alinea timestamps con close cuando hay None en Close
+  * [ADD] Chart Registry (app/core/chart_registry.py): ChartDef dataclass + register/unregister/get
+  * [ADD] Chart tests (tests/test_charts.py): 11 tests parametrizados sobre registry (200, vacío, error, coherencia entre endpoints)
+  * [CHG] SKILL.md: nuevo workflow de 8 pasos (análisis → opciones → code → test → fix → doc → commit → push)
+  * [CHG] SKILL.md: prioridad alta agrega "Tests de frontend Playwright para charts"
+  * [DOC] TASKS.md, SKILL.md, estudio/ actualizados con chart registry y workflow
 
- -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 13:00:00 -0300
+ -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Thu, 09 Jul 2026 14:00:00 -0300
 
 stock-analysis (2.0.0) unstable; urgency=medium
 
