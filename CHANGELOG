@@ -4,6 +4,7 @@ stock-analysis (2.4.0) unstable; urgency=medium
   * [ADD] Tests de persistencia BackgroundResult: 9 tests (creación, campos, timestamps, índices, eliminación)
   * [ADD] Cobertura prediction_service 61%→98%: resolución BUY/SELL/NEUTRAL, threshold, rollback, PnL accumulation
   * [FIX] Timezone en resolve_predictions: now naive UTC para compatibilidad SQLite (comparación naive/aware)
+  * [ADD] Tests de paralelización en top-ranking: error parcial, filtro NEUTRAL+0, todos fallan, defaults, ticker único, ordenamiento, todos neutral
 
 stock-analysis (2.3.0) unstable; urgency=medium
 

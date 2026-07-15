@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 235+ tests pasando · Login deshabilitado · Stack: Polars nativo · v2.3.0
+> Estado: 265 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.4.0
 
 ## ✅ Completado
 
@@ -47,10 +47,10 @@
 - [x] **Tests de persistencia BackgroundResult**: 9 tests (creación, campos, timestamps, índices, eliminación)
 - [x] **Cobertura prediction_service 61%→98%**: resolución BUY/SELL/NEUTRAL, threshold, rollback, PnL accumulation
 - [x] **Fix timezone en resolve_predictions**: `now` naive UTC para compatibilidad SQLite
+- [x] **Tests de paralelización en top-ranking**: error parcial, filtro NEUTRAL+0, todos fallan, defaults, ticker único, ordenamiento, todos neutral
 
 ## Alta Prioridad
 
-- [ ] Tests de lógica de paralelización en top-ranking
 - [ ] Entrenar modelo ML con dataset de analysis_results (scikit-learn o similar)
 - [ ] Backtesting: comparar señales de ML vs señales de estrategias clásicas
 
