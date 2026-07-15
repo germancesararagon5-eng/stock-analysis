@@ -17,45 +17,47 @@ docker compose up -d --build
 
 ## Project Structure
 - `app/` — Backend Python/FastAPI
-  - `routers/` — config, analysis, alerts, debug, options
-  - `services/` — technical_analysis, analysis_service, background_analyzer, prediction_service
-  - `core/` — strategies.py (indicadores Polars nativos)
+  - `routers/` — config, analysis, alerts, debug, options, ml
+  - `services/` — analysis_service, background_analyzer, prediction_service, ml_service, technical_analysis, whatsapp_service
+  - `core/` — strategies.py (indicadores Polars nativos), broker_manager, chart_registry, debug
   - `models.py` — DB models (broker_configs, alert_configs, predictions, background_results, whatsapp_configs)
-  - `static/` — Frontend SPA vanilla (5 tabs: Dashboard, Análisis, Alertas, Opciones, Depuración)
-- `tests/` — Pytest tests
+  - `static/` — Frontend SPA vanilla (5 tabs + theme modes)
+- `tests/` — 297 tests Pytest
 - `docs/` — architecture, api-reference, indicators, deployment, frontend, whatsapp-gateway
 - `whatsapp-gateway/` — Node.js + Baileys WhatsApp gateway
+
+## Workflow (leer después de cada cambio)
+1. Implementar cambios
+2. `pytest -v` (verificar tests pasando)
+3. `ruff check .` (lint)
+4. Actualizar `CHANGELOG`
+5. Actualizar `TASKS.md` (marcar completados, mover prioridades)
+6. Actualizar `AGENTS.md` (test count, estado)
+7. `git add -A && git commit -m "tipo: descripcion"`
+8. `git push origin main`
 
 ## Critical Rules
 - `--workers 1` (SQLAlchemy no soporta fork)
 - CPU sin AVX/AVX2 → `POLARS_SKIP_CPU_CHECK=1`, usar polars[rtcompat]
-- pl.from_pandas requiere pyarrow, filtrar columnas OHLCV
+- pl.from_pandas requiere pyarrow, filtrar columnas OHLCV (Dividends/Stock Splits rompen conversión)
 - No hay migrations DB — dropear tabla manualmente si se cambia modelo
 - Login deshabilitado temporalmente (auth_router no incluido en main.py)
-- Background analyzer usa lock + event para thread seguro
-
-## Key Commands
-```bash
-docker compose up -d --build       # Levantar todo
-pytest -v                           # Tests
-pytest tests/test_charts.py -v      # Chart tests
-ruff check .                        # Lint
-```
+- Background analyzer usa lock + event + ThreadPoolExecutor para thread seguro
+- Double click en charts resetea zoom
 
 ## Tests
-- 258 tests pasando
-- `test_strategies.py` — 50+ tests (lógica real incluida: RSI<30→BUY, EMA cross, SMA cross)
-- `test_background_result.py` — 9 tests de persistencia
-- `test_prediction_service_coverage.py` — coverage 98%
+- 297 tests pasando, 2 skip (auth)
+- Cobertura: background_analyzer 100%, prediction_service 98%, analysis_service 92%
+- Tests clave: test_strategies.py (50+), test_background_result.py (9), test_background_analyzer.py (34)
 - Auth tests: skip (login deshabilitado)
 
-## Contexto adicional
-- `TASKS.md` — lista de tareas y prioridades
-- `.opencode/context.md` — boot context detallado
-- `docs/` — documentación por área
+## Documentación
+- `README.md` — Manual completo de la app
+- `docs/` — Documentación por área
+- `TASKS.md` — Lista de tareas y prioridades
+- `.opencode/context.md` — Boot context detallado
+- `CHANGELOG` — Historial de versiones
 
 ## Próximos pasos prioritarios
-1. Tests de lógica de paralelización en top-ranking
-2. Entrenar modelo ML con dataset de analysis_results
-3. Backtesting ML vs estrategias clásicas
-4. Tests de background_analyzer, integración broker, WebSocket
+1. Entrenar modelo ML con dataset de analysis_results
+2. Backtesting ML vs estrategias clásicas

@@ -5,6 +5,13 @@ stock-analysis (2.4.0) unstable; urgency=medium
   * [ADD] Cobertura prediction_service 61%→98%: resolución BUY/SELL/NEUTRAL, threshold, rollback, PnL accumulation
   * [FIX] Timezone en resolve_predictions: now naive UTC para compatibilidad SQLite (comparación naive/aware)
   * [ADD] Tests de paralelización en top-ranking: error parcial, filtro NEUTRAL+0, todos fallan, defaults, ticker único, ordenamiento, todos neutral
+  * [ADD] Cobertura background_analyzer 92%→100%
+  * [ADD] Tests integración broker: Yahoo path, Binance auto-detection, fallback, OHLCV filter
+  * [ADD] Tests WebSocket: connect/disconnect, broadcast, multiple clients
+  * [ADD] Tests Docker Compose: 12 tests de estructura YML y Dockerfiles
+  * [DOC] Documentación OpenAPI/Swagger completa (40 endpoints con summary, schemas con descriptions)
+  * [ADD] Temas UI: modo Grey (escala de grises) y Light (claro) con persistencia localStorage
+  * [DOC] README.md completo con manual de la app, ejemplos, API reference, flujo de desarrollo
 
 stock-analysis (2.3.0) unstable; urgency=medium
 

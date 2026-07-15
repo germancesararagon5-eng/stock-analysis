@@ -60,3 +60,13 @@ register_chart(ChartDef(
     source="app.routers.analysis_router.technical_analysis",
     ui_location="Pestaña Análisis → panel de análisis técnico",
 ))
+
+register_chart(ChartDef(
+    name="strategy-comparison",
+    description="Comparación de señales entre todas las estrategias disponibles",
+    endpoint="/api/analysis/compare-strategies",
+    method="GET",
+    params={"ticker": "{ticker}", "interval": "1d", "periods": 100},
+    source="app.routers.analysis_router.compare_strategies",
+    ui_location="Pestaña Análisis → comparador de estrategias",
+))

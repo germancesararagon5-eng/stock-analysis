@@ -97,13 +97,13 @@ def test_send_alert_not_connected(mock_session_local, mock_get, mock_post):
     mock_query.order_by.return_value.first.return_value = mock_row
     mock_session_local.return_value = mock_db
 
-    mock_get.side_effect = requests.RequestException("Not connected")
+    mock_get.side_effect = requests.ConnectionError("Not connected")
 
     from app.services.whatsapp_service import send_alert
 
     result = send_alert("Test")
     assert result["status"] == "skipped"
-    assert result["reason"] == "WhatsApp not connected"
+    assert "No se puede conectar al gateway" in result["reason"]
 
 
 @patch("app.services.whatsapp_service.requests.get")
@@ -111,7 +111,8 @@ def test_check_connection(mock_get):
     mock_get.return_value.json.return_value = {"connected": True}
     from app.services.whatsapp_service import check_connection
     result = check_connection()
-    assert result == {"connected": True}
+    assert result["connected"] is True
+    assert result["gateway_reachable"] is True
 
 
 @patch("app.services.whatsapp_service.requests.get")
@@ -120,6 +121,8 @@ def test_check_connection_failure(mock_get):
     from app.services.whatsapp_service import check_connection
     result = check_connection()
     assert result["connected"] is False
+    assert result["gateway_reachable"] is False
+    assert "error" in result
 
 
 @patch("app.database.SessionLocal")
@@ -157,8 +160,10 @@ def test_update_phone_number_error(mock_session_local):
     assert result["status"] == "error"
 
 
+@patch("app.services.whatsapp_service.requests.get")
 @patch("app.database.SessionLocal")
-def test_get_config(mock_session_local):
+def test_get_config(mock_session_local, mock_get):
+    mock_get.return_value.json.return_value = {"connected": True}
     mock_db = MagicMock()
     mock_row = MagicMock()
     mock_row.phone_number = "+1234567890"
@@ -167,4 +172,6 @@ def test_get_config(mock_session_local):
     mock_session_local.return_value = mock_db
     from app.services.whatsapp_service import get_config
     result = get_config()
-    assert "phone_number" in result
+    assert result["connected"] is True
+    assert result["gateway_reachable"] is True
+    assert result["phone_number"] == "+1234567890"

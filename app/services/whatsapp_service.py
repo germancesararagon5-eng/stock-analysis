@@ -15,10 +15,37 @@ def check_connection() -> dict:
     try:
         r = requests.get(f"{GATEWAY_URL}/status", timeout=5)
         r.raise_for_status()
-        return r.json()
+        data = r.json()
+        data["gateway_reachable"] = True
+        return data
+    except requests.ConnectionError:
+        logger.warning("WhatsApp gateway no disponible (ConnectionError)")
+        return {
+            "connected": False,
+            "gateway_reachable": False,
+            "phone": None,
+            "error": (
+                f"No se puede conectar al gateway en {GATEWAY_URL}.\n"
+                "Asegurate de que el gateway esté corriendo:\n"
+                "  cd whatsapp-gateway && node index.js"
+            ),
+        }
+    except requests.Timeout:
+        logger.warning("WhatsApp gateway timeout")
+        return {
+            "connected": False,
+            "gateway_reachable": False,
+            "phone": None,
+            "error": f"Gateway en {GATEWAY_URL} no respondió (timeout).",
+        }
     except requests.RequestException as e:
-        logger.warning("WhatsApp gateway no disponible: %s", e)
-        return {"connected": False, "phone": None}
+        logger.warning("WhatsApp gateway error: %s", e)
+        return {
+            "connected": False,
+            "gateway_reachable": False,
+            "phone": None,
+            "error": f"Error de conexión con el gateway: {e}",
+        }
 
 
 @timed
@@ -40,8 +67,12 @@ def send_alert(message: str, to: Optional[str] = None) -> dict:
 
     status = check_connection()
     if not status.get("connected"):
-        logger.warning("WhatsApp no conectado")
-        return {"status": "skipped", "reason": "WhatsApp not connected"}
+        if status.get("gateway_reachable") is False:
+            reason = status.get("error", "WhatsApp gateway no disponible")
+        else:
+            reason = "WhatsApp gateway conectado pero no autenticado. Escaneá el QR en http://localhost:3001/qr"
+        logger.warning("WhatsApp no disponible: %s", reason)
+        return {"status": "skipped", "reason": reason}
 
     try:
         r = requests.post(
@@ -101,6 +132,7 @@ def get_config() -> dict:
 
     return {
         "connected": status.get("connected", False),
+        "gateway_reachable": status.get("gateway_reachable", True),
         "phone": status.get("phone"),
         "phone_number": phone,
     }

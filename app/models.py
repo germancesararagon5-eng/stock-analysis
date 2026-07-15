@@ -76,6 +76,47 @@ class Prediction(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class AnalysisResult(Base):
+    __tablename__ = "analysis_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticker = Column(String(20), nullable=False, index=True)
+    strategy = Column(String(50), nullable=False, index=True)
+    interval = Column(String(10), nullable=False)
+    periods = Column(Integer, default=100)
+    signal = Column(String(10), nullable=False)
+    confidence = Column(Float, default=0.0)
+    price = Column(Float, nullable=True)
+
+    # Indicadores estandarizados (features para ML)
+    rsi_14 = Column(Float, nullable=True)
+    ema_9 = Column(Float, nullable=True)
+    ema_21 = Column(Float, nullable=True)
+    ema_50 = Column(Float, nullable=True)
+    ema_200 = Column(Float, nullable=True)
+    bb_upper = Column(Float, nullable=True)
+    bb_lower = Column(Float, nullable=True)
+    macd = Column(Float, nullable=True)
+    macd_signal = Column(Float, nullable=True)
+    macd_histogram = Column(Float, nullable=True)
+    volume = Column(Float, nullable=True)
+    atr = Column(Float, nullable=True)
+    support_1 = Column(Float, nullable=True)
+    resistance_1 = Column(Float, nullable=True)
+
+    # Backup completo para feature engineering futuro
+    indicators_json = Column(JSON, nullable=True)
+    reasons = Column(JSON, nullable=True)
+
+    # Outcome tracking (etiquetas para ML)
+    outcome = Column(String(10), nullable=True, index=True)
+    price_change_pct = Column(Float, nullable=True)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+
+    error = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+
 class BackgroundResult(Base):
     __tablename__ = "background_results"
 

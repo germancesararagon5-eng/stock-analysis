@@ -3,19 +3,25 @@
 ## Diagrama de alto nivel
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        stock-analysis                               │
-│                                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────────────────┐  │
-│  │ FastAPI  │  │   SPA    │  │          │  │  WhatsApp Gateway   │  │
-│  │ Uvicorn  │◄─┤ Vanilla  │  │PostgreSQL│  │  Node.js + Baileys  │  │
-│  │ :8000    │  │ Chart.js │  │ :5432    │  │  :3000              │  │
-│  └────┬─────┘  └──────────┘  └──────────┘  └────────────────────┘  │
-│       │                                                             │
-│       ├── Routers ─── Services ─── Core/Strategies ─── Brokers      │
-│       │                                                             │
-│       └────────────────────── Redis :6379 (reservado) ──────────────┘
-└─────────────────────────────────────────────────────────────────────┘
+┌──────────┐     ┌──────────────┐     ┌──────────┐
+│ Browser  │────▶│  FastAPI     │────▶│ PostgreSQL│
+│ :8000    │     │  :8000       │     │ :5432    │
+└──────────┘     │              │     └──────────┘
+                 │ /api/analysis │     ┌──────────┐
+┌──────────┐     │ /api/alerts   │────▶│ Redis    │
+│ WhatsApp │◀───▶│ /api/config   │     │ :6379    │
+│ Gateway  │     │ /api/options  │     └──────────┘
+│ :3000    │     │ /api/debug    │
+└──────────┘     │ /api/ml       │
+                 └──────┬───────┘
+                        │
+            ┌───────────┴───────────┐
+            │                       │
+     ┌──────▼──────┐       ┌───────▼───────┐
+     │ Yahoo       │       │ Binance       │
+     │ Finance API │       │ REST API      │
+     │ (yfinance)  │       │ (kline data)  │
+     └─────────────┘       └───────────────┘
 ```
 
 ## Stack
@@ -191,3 +197,20 @@ background_analyzer.py:_loop()
 3. **DB migrations**: No hay Alembic. Si se cambia el modelo, dropear tabla manualmente.
 4. **Único punto de storage**: Todo análisis pasa por `run_analysis()` para guardar predicciones.
 5. **Resiliencia**: Ningún endpoint debe devolver 500 por datos faltantes. Siempre respuesta válida con `reasons`.
+
+## Tests Suite
+
+297 tests Pytest, 2 skip (auth). Coberturas clave:
+
+| Módulo | Tests | Cobertura |
+|--------|-------|-----------|
+| `background_analyzer.py` | 34 | **100%** |
+| `prediction_service.py` | 20+ | **98%** |
+| `strategies.py` | 55+ | Lógica real (RSI, EMA cross, SMA cross) |
+| `analysis_service.py` | 5 | 92% |
+| `analysis_router.py` | 15 | Endpoints + paralelización |
+| `brokers.py` | 15 | Yahoo + Binance + fallback |
+| `websocket.py` | 4 | Connect + broadcast + multiple clients |
+| `docker_compose.py` | 12 | YML + Dockerfiles |
+
+Todos los tests corren con SQLite (no requieren PostgreSQL).

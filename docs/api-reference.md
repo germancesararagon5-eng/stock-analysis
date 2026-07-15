@@ -1,6 +1,7 @@
 # Referencia de API
 
-La API expone **55+ endpoints** agrupados en 6 routers. Todos los endpoints retornan JSON.
+La API expone **40 endpoints** agrupados en 6 routers + WebSocket + health. Todos retornan JSON.
+Documentación interactiva en `/docs` (Swagger UI) y `/redoc` (ReDoc).
 El servidor corre en `http://localhost:8000`.
 
 ## Router: Analysis (`/api/analysis/`)
@@ -206,6 +207,13 @@ Archivo: `app/routers/options_router.py`
 | POST | `/api/options/debug/toggle` | Toggle debug |
 | POST | `/api/options/debug/clear` | Limpiar debug |
 
+### Router: ML (`/api/ml/`)
+
+| Método | Path | Descripción |
+|--------|------|-------------|
+| GET | `/api/ml/dataset` | Exportar dataset de entrenamiento (query: strategies, tickers, limit, min_confidence) |
+| GET | `/api/ml/stats` | Estadísticas del dataset (total por estrategia, win rate) |
+
 ---
 
 ## Otros endpoints
@@ -230,17 +238,17 @@ Archivo: `app/routers/options_router.py`
 
 ## Intervalos y períodos
 
-Mapeo de intervalos de la app a yfinance:
+Mapeo de intervalos de la app a yfinance / Binance:
 
-| App | yfinance Interval | yfinance Period |
-|-----|------------------|-----------------|
-| 1m | 1m | 1d |
-| 5m | 5m | 5d |
-| 15m | 15m | 1mo |
-| 30m | 30m | 1mo |
-| 1h | 60m | 2mo |
-| 4h | 4h | 6mo |
-| 1d | 1d | 1y |
+| App | yfinance Interval | yfinance Period | Binance |
+|-----|------------------|-----------------|---------|
+| 1m | 1m | 1d | 1m |
+| 5m | 5m | 5d | 5m |
+| 15m | 15m | 1mo | 15m |
+| 30m | 30m | 1mo | 30m |
+| 1h | 60m | 2mo | 1h |
+| 4h | 4h | 6mo | 4h |
+| 1d | 1d | 1y | 1d |
 
 ## POPULAR_TICKERS (44)
 

@@ -5,9 +5,27 @@ import traceback
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+import numpy as np
+
 logger = logging.getLogger(__name__)
 
 MAX_LOG = 500
+
+
+def _clean(val: Any) -> Any:
+    if isinstance(val, np.integer):
+        return int(val)
+    if isinstance(val, np.floating):
+        return float(val)
+    if isinstance(val, np.ndarray):
+        return val.tolist()
+    if isinstance(val, dict):
+        return {k: _clean(v) for k, v in val.items()}
+    if isinstance(val, list):
+        return [_clean(v) for v in val]
+    if isinstance(val, tuple):
+        return tuple(_clean(v) for v in val)
+    return val
 
 
 class DebugTracker:
@@ -117,7 +135,7 @@ class DebugTracker:
 
     def snapshot(self) -> dict:
         broker_switches = [e for e in self.broker_events if e["event"] == "switch"]
-        return dict(
+        return _clean(dict(
             enabled=self.enabled,
             stats=dict(
                 total_requests=len(self.requests),
@@ -129,7 +147,7 @@ class DebugTracker:
             recent_errors=self.errors[-10:],
             recent_broker_events=self.broker_events[-10:],
             recent_strategy_evals=self.strategy_evals[-5:],
-        )
+        ))
 
     def clear(self):
         self._reset()
