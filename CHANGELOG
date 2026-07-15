@@ -1,3 +1,19 @@
+stock-analysis (2.5.0) unstable; urgency=medium
+
+  * [ADD] ML Backtesting: RandomForest entrenado con indicators→outcome, comparación 6 estrategias vs ML
+  * [ADD] POST /api/ml/train — entrena modelo ML con datos históricos, retorna accuracy + feature importance
+  * [ADD] GET /api/ml/status — estado del modelo entrenado
+  * [ADD] GET /api/ml/backtest — compara señales de 6 estrategias clásicas vs predicción ML
+  * [ADD] Frontend: ML Backtesting card en pestaña Opciones (entrenar + comparar)
+  * [ADD] scikit-learn en requirements.txt
+  * [ADD] 6 tests de ML training + backtesting
+  * [ADD] Tab Admin unificada: endpoint GET /api/admin/status con estado de todos los servicios
+  * [ADD] GET /api/admin/status + data_flow: recuentos por tabla, resueltos, win rate, fetches
+  * [ADD] Frontend: tab Admin con cards para API, DB, Redis, WhatsApp, BG Analyzer, ML, Broker, Debug
+  * [ADD] Data Flow Pipeline visual en Admin: 5 etapas con colores (Fuente→Transformación→Storage→ML→Output)
+  * [ADD] Polling automático Admin (cada 5s) + colores dinámicos según estado de cada stage
+  * [ADD] 1 test de admin endpoint
+
 stock-analysis (2.4.0) unstable; urgency=medium
 
   * [ADD] Tests de lógica real para estrategias: RSI<30→BUY, RSI>70→SELL, EMA golden/death cross, SMA golden/death cross
@@ -12,16 +28,6 @@ stock-analysis (2.4.0) unstable; urgency=medium
   * [DOC] Documentación OpenAPI/Swagger completa (40 endpoints con summary, schemas con descriptions)
   * [ADD] Temas UI: modo Grey (escala de grises) y Light (claro) con persistencia localStorage
   * [DOC] README.md completo con manual de la app, ejemplos, API reference, flujo de desarrollo
-  * [ADD] ML Backtesting: RandomForest entrenado con indicators→outcome, comparación 6 estrategias vs ML
-  * [ADD] POST /api/ml/train — entrena modelo ML con datos históricos, retorna accuracy + feature importance
-  * [ADD] GET /api/ml/status — estado del modelo entrenado
-  * [ADD] GET /api/ml/backtest — compara señales de 6 estrategias clásicas vs predicción ML
-  * [ADD] Frontend: ML Backtesting card en pestaña Opciones (entrenar + comparar)
-  * [ADD] scikit-learn en requirements.txt
-  * [ADD] 6 tests de ML training + backtesting
-  * [ADD] Tab Admin unificada: endpoint GET /api/admin/status con estado de todos los servicios
-  * [ADD] Frontend: tab Admin con cards para API, DB, Redis, WhatsApp, BG Analyzer, ML, Broker, Debug
-  * [ADD] 1 test de admin endpoint
 
 stock-analysis (2.3.0) unstable; urgency=medium
 

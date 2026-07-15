@@ -283,6 +283,33 @@ pre.log { background: var(--bg); padding: 12px; border-radius: 6px;
 .admin-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13px; }
 .admin-lbl { color: var(--muted); }
 
+/* ── Data Flow Pipeline ── */
+.df-pipeline { display: flex; align-items: stretch; gap: 4px; flex-wrap: nowrap; overflow-x: auto; padding: 8px 0; }
+.df-stage { flex: 1; min-width: 140px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+.df-stage.df-source { border-left: 3px solid var(--green); }
+.df-stage.df-transform { border-left: 3px solid var(--accent); }
+.df-stage.df-store { border-left: 3px solid var(--yellow); }
+.df-stage.df-ml { border-left: 3px solid #d29922; }
+.df-stage.df-output { border-left: 3px solid var(--red); }
+.df-icon { font-size: 24px; margin-bottom: 4px; }
+.df-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.df-items { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.df-item { font-size: 10px; background: var(--bg); padding: 3px 8px; border-radius: 4px; color: var(--muted); white-space: nowrap; }
+.df-item.df-yahoo { color: var(--green); border-left: 2px solid var(--green); }
+.df-item.df-binance { color: var(--yellow); border-left: 2px solid var(--yellow); }
+.df-item.df-polars { color: var(--accent); border-left: 2px solid var(--accent); }
+.df-item.df-strategies { color: var(--text); border-left: 2px solid var(--accent); }
+.df-item.df-predictions { color: var(--green); border-left: 2px solid var(--green); }
+.df-item.df-analysis { color: var(--yellow); border-left: 2px solid var(--yellow); }
+.df-item.df-bg-results { color: var(--muted); border-left: 2px solid var(--muted); }
+.df-item.df-rf { color: #d29922; border-left: 2px solid #d29922; }
+.df-item.df-features { color: var(--muted); border-left: 2px solid var(--muted); }
+.df-item.df-backtest { color: var(--red); border-left: 2px solid var(--red); }
+.df-item.df-whatsapp { color: var(--green); border-left: 2px solid var(--green); }
+.df-count { font-weight: 700; color: var(--text); margin-left: 4px; }
+.df-meta { font-size: 10px; color: var(--muted); }
+.df-arrow { display: flex; align-items: center; font-size: 16px; color: var(--border); padding: 0 2px; }
+
 @media (max-width: 768px) {
   header { flex-wrap: wrap; }
   nav { margin-left: 0; width: 100%; justify-content: center; }

@@ -771,6 +771,92 @@
 
 </section>
 
+  <!-- ── Data Flow Pipeline ── -->
+  <div class="card" id="admin-dataflow-card">
+    <h2>📊 Data Flow Pipeline</h2>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+      Flujo de datos desde la fuente externa hasta el modelo ML y backtesting.
+      Los números muestran registros en cada etapa del pipeline.
+    </p>
+
+    <div class="df-pipeline">
+
+      <div class="df-stage df-source">
+        <div class="df-icon">🌐</div>
+        <div class="df-title">Fuentes Externas</div>
+        <div class="df-items">
+          <span class="df-item df-yahoo">Yahoo Finance</span>
+          <span class="df-item df-binance">Binance API</span>
+        </div>
+        <div class="df-meta" id="df-source-meta">Bajo demanda · vía broker</div>
+      </div>
+      <div class="df-arrow">▶</div>
+
+      <div class="df-stage df-transform">
+        <div class="df-icon">🔄</div>
+        <div class="df-title">Transformación</div>
+        <div class="df-items">
+          <span class="df-item df-polars">Polars DataFrame</span>
+          <span class="df-item df-strategies">6 Estrategias</span>
+        </div>
+        <div class="df-meta" id="df-transform-meta">Indicadores: RSI, EMA, MACD, BB…</div>
+      </div>
+      <div class="df-arrow">▶</div>
+
+      <div class="df-stage df-store">
+        <div class="df-icon">💾</div>
+        <div class="df-title">Base de Datos</div>
+        <div class="df-items">
+          <span class="df-item df-predictions">predicciones <span id="df-count-predictions" class="df-count">0</span></span>
+          <span class="df-item df-analysis">analysis_results <span id="df-count-analysis" class="df-count">0</span></span>
+          <span class="df-item df-bg-results">background_results <span id="df-count-bg" class="df-count">0</span></span>
+        </div>
+        <div class="df-meta" id="df-store-meta"><span id="df-resolved">0</span> resueltos · <span id="df-winrate">0%</span> win rate</div>
+      </div>
+      <div class="df-arrow">▶</div>
+
+      <div class="df-stage df-ml">
+        <div class="df-icon">🧠</div>
+        <div class="df-title">Modelo ML</div>
+        <div class="df-items">
+          <span class="df-item df-rf">RandomForest</span>
+          <span class="df-item df-features">15 Features</span>
+        </div>
+        <div class="df-meta" id="df-ml-meta"><span id="df-ml-model-status">No entrenado</span></div>
+      </div>
+      <div class="df-arrow">▶</div>
+
+      <div class="df-stage df-output">
+        <div class="df-icon">📈</div>
+        <div class="df-title">Output</div>
+        <div class="df-items">
+          <span class="df-item df-backtest">Backtest</span>
+          <span class="df-item df-whatsapp">WhatsApp Alert</span>
+        </div>
+        <div class="df-meta" id="df-output-meta">Señal vs ML · Acuerdo <span id="df-last-agreement">—</span></div>
+      </div>
+
+    </div>
+
+    <div class="df-legend" style="margin-top:16px;font-size:11px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#3fb950;margin-right:4px"></span> Stage activo</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#d29922;margin-right:4px"></span> Con datos</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8b949e;margin-right:4px"></span> Sin datos</span>
+      <span style="margin-left:auto">Actualiza cada 5s · <span id="df-last-update">—</span></span>
+    </div>
+
+    <div style="margin-top:12px;padding:8px;background:var(--bg);border-radius:6px;font-size:11px;line-height:1.6;color:var(--muted)">
+      <b style="color:var(--text)">Leyenda del flujo:</b><br>
+      <b style="color:var(--green)">1. Fuentes</b> → Yahoo Finance (acciones/indices) y Binance (cripto) proveen datos OHLCV.<br>
+      <b style="color:var(--accent)">2. Transformación</b> → Polars convierte a DataFrame, 6 estrategias calculan indicadores + señal.<br>
+      <b style="color:var(--yellow)">3. Storage</b> → <code>run_analysis()</code> guarda en <code>predictions</code> (para trading simulado) y el BG analyzer en <code>analysis_results</code> (15 features para ML). <code>resolve_outcomes()</code> etiqueta WIN/LOSS.<br>
+      <b style="color:#d29922">4. ML</b> → RandomForest (100 árboles, max_depth=10) entrena con features → predice WIN/LOSS probability.<br>
+      <b style="color:#f85149">5. Output</b> → Backtest compara las 6 estrategias vs ML. Alertas WhatsApp en señales fuertes.
+    </div>
+  </div>
+
+</section>
+
 <!-- ══════════════════ DEBUG ══════════════════ -->
 <section id="tab-debug" class="tab">
 

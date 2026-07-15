@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 304 tests pasando · Login deshabilitado · Stack: Polars nativo · ML: RandomForest · v2.5.0
+> Estado: 304 tests pasando · Login deshabilitado · Stack: Polars nativo · ML: RandomForest · Admin unificado · v2.5.0
 
 ## ✅ Completado
 

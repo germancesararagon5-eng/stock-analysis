@@ -17,11 +17,11 @@ docker compose up -d --build
 
 ## Project Structure
 - `app/` — Backend Python/FastAPI
-  - `routers/` — config, analysis, alerts, debug, options, ml
-  - `services/` — analysis_service, background_analyzer, prediction_service, ml_service, technical_analysis, whatsapp_service
+  - `routers/` — admin, config, analysis, alerts, debug, options, ml
+  - `services/` — admin_service, analysis_service, background_analyzer, prediction_service, ml_service, technical_analysis, whatsapp_service
   - `core/` — strategies.py (indicadores Polars nativos), broker_manager, chart_registry, debug
-  - `models.py` — DB models (broker_configs, alert_configs, predictions, background_results, whatsapp_configs)
-  - `static/` — Frontend SPA vanilla (5 tabs + theme modes)
+  - `models.py` — DB models (broker_configs, alert_configs, predictions, analysis_results, background_results, whatsapp_configs)
+  - `static/` — Frontend SPA vanilla (6 tabs + theme modes)
 - `tests/` — 304 tests Pytest
 - `docs/` — architecture, api-reference, indicators, deployment, frontend, whatsapp-gateway
 - `whatsapp-gateway/` — Node.js + Baileys WhatsApp gateway
@@ -48,7 +48,7 @@ docker compose up -d --build
 ## Tests
 - 304 tests pasando, 2 skip (auth)
 - Cobertura: background_analyzer 100%, prediction_service 98%, analysis_service 92%
-- Tests clave: test_strategies.py (50+), test_background_result.py (9), test_background_analyzer.py (34), test_ml_backtest.py (6)
+- Tests clave: test_strategies.py (50+), test_background_result.py (9), test_background_analyzer.py (34), test_ml_backtest.py (6), test_admin.py (1)
 - Auth tests: skip (login deshabilitado)
 
 ## Documentación
@@ -61,5 +61,7 @@ docker compose up -d --build
 ## Próximos pasos prioritarios
 - [COMPLETADO] Entrenar modelo ML con dataset de analysis_results
 - [COMPLETADO] Backtesting ML vs estrategias clásicas
+- [COMPLETADO] Tab Admin unificada con data flow pipeline
 1. Tests de frontend (JavaScript con Playwright)
 2. Documentación OpenAPI (Swagger) — (parcial, actualizar con nuevos endpoints ML)
+3. Persistencia de modelo ML en disco (pickle) para no perderlo al reiniciar

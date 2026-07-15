@@ -1808,6 +1808,44 @@ async function loadAdminStatus() {
     document.getElementById('admin-debug-status').outerHTML = _badge(s.debug.status, dbgMap[s.debug.status] || s.debug.status);
     document.getElementById('admin-debug-enabled').textContent = dbgMap[s.debug.status] || s.debug.status;
     document.getElementById('admin-debug-entries').textContent = s.debug.entries || 0;
+
+    // ── Data Flow Pipeline ──
+    if (s.data_flow) {
+      const df = s.data_flow;
+      document.getElementById('df-count-predictions').textContent = (df.predictions || 0).toLocaleString();
+      document.getElementById('df-count-analysis').textContent = (df.analysis_results || 0).toLocaleString();
+      document.getElementById('df-count-bg').textContent = (df.background_results || 0).toLocaleString();
+      document.getElementById('df-resolved').textContent = (df.analysis_resolved || 0).toLocaleString();
+      document.getElementById('df-winrate').textContent = (df.analysis_win_rate || 0) + '%';
+      document.getElementById('df-last-update').textContent = new Date().toLocaleTimeString();
+
+      // ML model status in pipeline
+      const mlEl = document.getElementById('df-ml-model-status');
+      if (s.ml_model.trained) {
+        mlEl.innerHTML = `✅ Entrenado · ${(s.ml_model.accuracy * 100).toFixed(1)}% acc`;
+        mlEl.style.color = 'var(--green)';
+      } else {
+        const needs = s.ml_model.requires_training ? ' (faltan datos)' : '';
+        mlEl.textContent = '⚠️ No entrenado' + needs;
+        mlEl.style.color = 'var(--yellow)';
+      }
+
+      // Stage coloring based on data presence
+      const stages = [
+        { el: document.querySelector('.df-source'), hasData: true },
+        { el: document.querySelector('.df-transform'), hasData: true },
+        { el: document.querySelector('.df-store'), hasData: df.analysis_results > 0 || df.predictions > 0 },
+        { el: document.querySelector('.df-ml'), hasData: s.ml_model.trained },
+        { el: document.querySelector('.df-output'), hasData: df.analysis_resolved > 0 },
+      ];
+      stages.forEach(st => {
+        if (st.el) {
+          st.el.style.opacity = st.hasData ? '1' : '0.5';
+          const dot = st.el.querySelector('.df-icon');
+          if (dot) dot.textContent = st.hasData ? '✅' : '⏳';
+        }
+      });
+    }
   } catch (_) {}
 }
 
@@ -1884,6 +1922,7 @@ function initApp() {
 
   // ── Admin ──
   loadAdminStatus();
+  setInterval(loadAdminStatus, 5000);
 
   // ── Predictions ──
   document.getElementById('pred-filter-btn').addEventListener('click', () => {
