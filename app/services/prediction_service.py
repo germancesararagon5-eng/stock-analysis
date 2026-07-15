@@ -23,8 +23,9 @@ def store_prediction(
     reasons: Optional[list] = None,
     indicators: Optional[dict] = None,
 ) -> int:
-    db: Session = SessionLocal()
+    db: Session = None
     try:
+        db = SessionLocal()
         pred = Prediction(
             ticker=ticker,
             signal=signal,
@@ -44,19 +45,22 @@ def store_prediction(
         return pred.id
     except Exception as e:
         logger.error("Error storing prediction: %s", e)
-        db.rollback()
+        if db is not None:
+            db.rollback()
         return -1
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
 DEFAULT_THRESHOLD_PCT = 0.0  # Minimum price change % to consider correct
 
 
 def resolve_predictions(count: int = 50, threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> int:
-    db: Session = SessionLocal()
+    db: Session = None
     try:
-        now = datetime.now(timezone.utc)
+        db = SessionLocal()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
 
         def min_age_for_interval(interval: str) -> timedelta:
             mins = INTERVAL_MINUTES.get(interval, 5)
@@ -91,7 +95,7 @@ def resolve_predictions(count: int = 50, threshold_pct: float = DEFAULT_THRESHOL
                 change_pct = ((current_price - pred.price_at_prediction) / pred.price_at_prediction) * 100
                 pred.price_at_outcome = current_price
                 pred.price_change_pct = round(change_pct, 2)
-                pred.resolved_at = datetime.now(timezone.utc)
+                pred.resolved_at = now
 
                 meets_threshold = abs(change_pct) >= threshold_pct
 
@@ -119,15 +123,18 @@ def resolve_predictions(count: int = 50, threshold_pct: float = DEFAULT_THRESHOL
         return resolved
     except Exception as e:
         logger.error("Error resolving predictions: %s", e)
-        db.rollback()
+        if db is not None:
+            db.rollback()
         return 0
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
 def get_prediction_stats(ticker: Optional[str] = None) -> dict:
-    db: Session = SessionLocal()
+    db = None
     try:
+        db = SessionLocal()
         q = db.query(Prediction)
         if ticker:
             q = q.filter(Prediction.ticker == ticker.upper())
@@ -158,12 +165,14 @@ def get_prediction_stats(ticker: Optional[str] = None) -> dict:
             "losing_trades": losing_trades,
         }
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
 def get_trading_summary(ticker: Optional[str] = None) -> dict:
-    db: Session = SessionLocal()
+    db = None
     try:
+        db = SessionLocal()
         q = db.query(Prediction).filter(Prediction.outcome.in_(["CORRECT", "INCORRECT"]))
         if ticker:
             q = q.filter(Prediction.ticker == ticker.upper())
@@ -219,7 +228,8 @@ def get_trading_summary(ticker: Optional[str] = None) -> dict:
             "trades": trades[:50],
         }
     finally:
-        db.close()
+        if db is not None:
+            db.close()
 
 
 def get_predictions(
@@ -227,8 +237,9 @@ def get_predictions(
     limit: int = 50,
     offset: int = 0,
 ) -> list[dict]:
-    db: Session = SessionLocal()
+    db = None
     try:
+        db = SessionLocal()
         q = db.query(Prediction).order_by(Prediction.created_at.desc())
         if ticker:
             q = q.filter(Prediction.ticker == ticker.upper())
@@ -254,4 +265,5 @@ def get_predictions(
             for r in rows
         ]
     finally:
-        db.close()
+        if db is not None:
+            db.close()

@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 113 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.2.0
+> Estado: 235+ tests pasando · Login deshabilitado · Stack: Polars nativo · v2.3.0
 
 ## ✅ Completado
 
@@ -41,16 +41,18 @@
 - [x] `docs/deployment.md` — Docker, desarrollo local, CI/CD, env vars, troubleshooting
 - [x] `SKILL.md` actualizado con stack completo (Node.js 22, Python 3.13), convenciones, estado v2.2.0
 
+## ✅ Completado (v2.4.0)
+
+- [x] **Tests de lógica real para estrategias**: RSI<30→sobrevendido, RSI>70→sobrecomprado, EMA golden/death cross, SMA golden/death cross
+- [x] **Tests de persistencia BackgroundResult**: 9 tests (creación, campos, timestamps, índices, eliminación)
+- [x] **Cobertura prediction_service 61%→98%**: resolución BUY/SELL/NEUTRAL, threshold, rollback, PnL accumulation
+- [x] **Fix timezone en resolve_predictions**: `now` naive UTC para compatibilidad SQLite
+
 ## Alta Prioridad
 
-- [ ] Tests de lógica real para estrategias (scalping y swing con Polars)
-  - RSI < 30 → señal BUY + razón "sobrevendido"
-  - RSI > 70 → señal SELL + razón "sobrecomprado"
-  - EMA9 > EMA21 (golden cross) → BUY
-  - EMA9 < EMA21 (death cross) → SELL
-- [ ] Tests de persistencia BackgroundResult (modelo nuevo, 0 tests)
-- [ ] Subir cobertura `prediction_service.py` (61%)
 - [ ] Tests de lógica de paralelización en top-ranking
+- [ ] Entrenar modelo ML con dataset de analysis_results (scikit-learn o similar)
+- [ ] Backtesting: comparar señales de ML vs señales de estrategias clásicas
 
 ## Media Prioridad
 

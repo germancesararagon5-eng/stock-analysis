@@ -1,3 +1,31 @@
+stock-analysis (2.4.0) unstable; urgency=medium
+
+  * [ADD] Tests de lógica real para estrategias: RSI<30→BUY, RSI>70→SELL, EMA golden/death cross, SMA golden/death cross
+  * [ADD] Tests de persistencia BackgroundResult: 9 tests (creación, campos, timestamps, índices, eliminación)
+  * [ADD] Cobertura prediction_service 61%→98%: resolución BUY/SELL/NEUTRAL, threshold, rollback, PnL accumulation
+  * [FIX] Timezone en resolve_predictions: now naive UTC para compatibilidad SQLite (comparación naive/aware)
+
+stock-analysis (2.3.0) unstable; urgency=medium
+
+  * [ADD] Background analyzer multi-estrategia: corre las 6 estrategias en cada ciclo vía ThreadPoolExecutor
+  * [ADD] AnalysisResult model: almacena TODOS los análisis con indicadores completos desnormalizados (rsi, emas, bb, macd, atr, sr) para ML
+  * [ADD] ml_service.py: store_analysis_result(), export_dataset(), get_dataset_stats(), resolve_outcomes()
+  * [ADD] ML router (/api/ml/dataset, /api/ml/stats) para exportar dataset de entrenamiento
+  * [ADD] Soporte crypto: get_historical_data() detecta tickers USDT/USDC/BUSD y fetches de Binance API
+  * [ADD] Frontend: tabla de resultados multi-estrategia con columna de estrategia
+  * [ADD] Frontend: tarjeta ML con total registros, win rate, breakdown por estrategia
+  * [CHG] BackgroundAnalyzer: defaults multi-estrategia (interval=1d, every=3600s, min_confidence=0.0, strategy=all)
+  * [CHG] Tests de background_analyzer actualizados para multi-estrategia (26 tests, todos pasando)
+  * [CHG] Estrategias: labels con emojis + descripción simple para no-traders en selects e info-popups
+  * [CHG] Condiciones de alerta: labels + info-popup con explicación en lenguaje cotidiano
+  * [CHG] STRATEGY_DESCRIPTIONS en backend: texto en español llano sin jerga técnica
+  * [CHG] WhatsApp gateway /qr: devuelve HTML renderizado con QR + instrucciones
+  * [CHG] WhatsApp check_connection() distingue ConnectionError / Timeout / no autenticado
+  * [FIX] WhatsApp test: mensajes de error con instrucciones accionables
+  * [FIX] Tests de check_connection() y get_config() validan gateway_reachable
+
+  -- German Cesar Aragon <german.cesar.aragon5@gmail.com>  Mon, 13 Jul 2026 20:00:00 -0300
+
 stock-analysis (2.2.0) unstable; urgency=medium
 
   * [ADD] Documentación completa en docs/: architecture, api-reference, indicators, whatsapp-gateway, frontend, deployment
