@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 285 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.4.0
+> Estado: 297 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.4.0
 
 ## ✅ Completado
 
@@ -57,8 +57,8 @@
 ## Media Prioridad
 
 - [x] Subir cobertura `background_analyzer.py` (100%)
-- [ ] Tests de integración con broker (yahoo_finance)
-- [ ] Tests de WebSocket (ws_manager)
+- [x] Tests de integración con broker (yahoo_finance): Yahoo path, Binance auto-detection, fallback, OHLCV filter, unsupported broker
+- [x] Tests de WebSocket (ws_manager): connect/disconnect, broadcast receive, multiple clients, empty data
 - [ ] Tests de frontend (JavaScript con Playwright)
 
 ## Baja Prioridad
