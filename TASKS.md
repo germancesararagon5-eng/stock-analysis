@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 265 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.4.0
+> Estado: 277 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.4.0
 
 ## ✅ Completado
 
@@ -64,4 +64,4 @@
 ## Baja Prioridad
 
 - [ ] Documentación OpenAPI (Swagger)
-- [ ] Docker compose tests
+- [x] Docker compose tests: 12 tests (compose YML válido, servicios requeridos, puertos, volúmenes, Dockerfiles)
