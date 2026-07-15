@@ -11,7 +11,7 @@ from app.config import settings
 from app.core.broker_manager import BrokerManager
 from app.core.debug import DebugMiddleware
 from app.database import init_db
-from app.routers import alerts_router, analysis_router, config_router, debug_router, ml_router, options_router
+from app.routers import admin_router, alerts_router, analysis_router, config_router, debug_router, ml_router, options_router
 from app.services.ws_manager import ws_manager
 
 logging.basicConfig(
@@ -57,6 +57,7 @@ app = FastAPI(
         {"name": "debug", "description": "Depuración en vivo: requests, errores, eventos de broker y estrategia"},
         {"name": "options", "description": "Configuración del background analyzer, predicciones, trading simulator y WhatsApp"},
         {"name": "ml", "description": "Exportación de dataset ML y estadísticas de entrenamiento"},
+        {"name": "admin", "description": "Administración de servicios de infraestructura: estado de API, DB, Redis, WhatsApp, BG Analyzer, ML y Broker"},
     ],
     lifespan=lifespan,
 )
@@ -76,6 +77,7 @@ app.include_router(alerts_router.router)
 app.include_router(debug_router.router)
 app.include_router(options_router.router)
 app.include_router(ml_router.router)
+app.include_router(admin_router.router)
 
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 

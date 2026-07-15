@@ -1745,6 +1745,73 @@ function stopOptionsPoll() {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  ADMIN TAB - INFRASTRUCTURE SERVICE STATUS
+// ════════════════════════════════════════════════════════════════
+
+function _badge(status, okText) {
+  const cls = status === 'ok' || status === 'connected' || status === 'running' || status === 'trained' || status === 'enabled'
+    ? 'badge buy' : status === 'error' || status === 'disconnected' || status === 'not_trained' || status === 'gateway_unreachable'
+    ? 'badge sell' : 'badge neutral';
+  const label = okText || status;
+  return `<span class="${cls}">● ${label}</span>`;
+}
+
+async function loadAdminStatus() {
+  try {
+    const s = await api('GET', '/api/admin/status');
+
+    // API
+    document.getElementById('admin-api-status').outerHTML = _badge(s.api.status, 'OK');
+    document.getElementById('admin-api-version').textContent = s.api.version;
+    document.getElementById('admin-api-uptime').textContent = s.api.uptime;
+
+    // DB
+    document.getElementById('admin-db-status').outerHTML = _badge(s.database.status, s.database.status === 'ok' ? 'Conectada' : 'Error');
+    document.getElementById('admin-db-tables').textContent = s.database.tables || '—';
+    document.getElementById('admin-db-records').textContent = (s.database.total_records || 0).toLocaleString();
+
+    // Redis
+    document.getElementById('admin-redis-status').outerHTML = _badge(s.redis.status, s.redis.status === 'not_configured' ? 'No configurado' : s.redis.status);
+    document.getElementById('admin-redis-detail').textContent = s.redis.status === 'not_configured' ? 'Reservado (no implementado)' : s.redis.status;
+
+    // WhatsApp
+    const waMap = { connected: '✅ Conectado', gateway_unreachable: '🔴 Gateway caído', waiting_qr: '⏳ Esperando QR', not_configured: '⚪ Sin configurar' };
+    document.getElementById('admin-wa-status').outerHTML = _badge(s.whatsapp.status, waMap[s.whatsapp.status] || s.whatsapp.status);
+    document.getElementById('admin-wa-connection').textContent = waMap[s.whatsapp.status] || s.whatsapp.status;
+    document.getElementById('admin-wa-phone').textContent = s.whatsapp.phone || '—';
+
+    // Background Analyzer
+    const bgMap = { running: '🟢 Activo', stopped: '⏸️ Detenido' };
+    document.getElementById('admin-bg-status').outerHTML = _badge(s.background_analyzer.status, bgMap[s.background_analyzer.status] || s.background_analyzer.status);
+    document.getElementById('admin-bg-tickers').textContent = (s.background_analyzer.tickers || []).join(', ') || '—';
+    document.getElementById('admin-bg-strategy').textContent = s.background_analyzer.strategy || '—';
+    document.getElementById('admin-bg-interval').textContent = s.background_analyzer.interval || '—';
+    document.getElementById('admin-bg-lastrun').textContent = s.background_analyzer.last_run ? new Date(s.background_analyzer.last_run).toLocaleString() : '—';
+
+    // ML Model
+    const mlMap = { trained: '🧠 Entrenado', not_trained: '⚠️ No entrenado' };
+    document.getElementById('admin-ml-status').outerHTML = _badge(s.ml_model.status, mlMap[s.ml_model.status] || s.ml_model.status);
+    document.getElementById('admin-ml-trained').textContent = mlMap[s.ml_model.status] || s.ml_model.status;
+    document.getElementById('admin-ml-accuracy').textContent = s.ml_model.accuracy ? (s.ml_model.accuracy * 100).toFixed(1) + '%' : '—';
+    document.getElementById('admin-ml-samples').textContent = s.ml_model.samples || '—';
+    document.getElementById('admin-ml-date').textContent = s.ml_model.trained_at ? new Date(s.ml_model.trained_at).toLocaleString() : '—';
+
+    // Broker
+    const brMap = { connected: '✅ Conectado', disconnected: '❌ Desconectado', no_broker: '⚪ Sin broker' };
+    document.getElementById('admin-broker-status').outerHTML = _badge(s.broker.status, brMap[s.broker.status] || s.broker.status);
+    document.getElementById('admin-broker-name').textContent = s.broker.name || '—';
+    document.getElementById('admin-broker-connected').textContent = s.broker.connected ? '✅ Sí' : '❌ No';
+    document.getElementById('admin-broker-sandbox').textContent = s.broker.sandbox ? '✅ Sí' : '❌ No';
+
+    // Debug
+    const dbgMap = { enabled: '🟢 Activado', disabled: '⚪ Desactivado' };
+    document.getElementById('admin-debug-status').outerHTML = _badge(s.debug.status, dbgMap[s.debug.status] || s.debug.status);
+    document.getElementById('admin-debug-enabled').textContent = dbgMap[s.debug.status] || s.debug.status;
+    document.getElementById('admin-debug-entries').textContent = s.debug.entries || 0;
+  } catch (_) {}
+}
+
+// ════════════════════════════════════════════════════════════════
 //  THEME
 // ════════════════════════════════════════════════════════════════
 
@@ -1814,6 +1881,9 @@ function initApp() {
   document.getElementById('opt-debug-toggle').addEventListener('change', optToggleDebug);
   document.getElementById('wa-save-btn').addEventListener('click', saveWhatsAppConfig);
   document.getElementById('wa-test-btn').addEventListener('click', testWhatsAppFromOptions);
+
+  // ── Admin ──
+  loadAdminStatus();
 
   // ── Predictions ──
   document.getElementById('pred-filter-btn').addEventListener('click', () => {

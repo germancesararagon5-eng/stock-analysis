@@ -19,6 +19,9 @@ stock-analysis (2.4.0) unstable; urgency=medium
   * [ADD] Frontend: ML Backtesting card en pestaña Opciones (entrenar + comparar)
   * [ADD] scikit-learn en requirements.txt
   * [ADD] 6 tests de ML training + backtesting
+  * [ADD] Tab Admin unificada: endpoint GET /api/admin/status con estado de todos los servicios
+  * [ADD] Frontend: tab Admin con cards para API, DB, Redis, WhatsApp, BG Analyzer, ML, Broker, Debug
+  * [ADD] 1 test de admin endpoint
 
 stock-analysis (2.3.0) unstable; urgency=medium
 

@@ -22,7 +22,7 @@ docker compose up -d --build
   - `core/` — strategies.py (indicadores Polars nativos), broker_manager, chart_registry, debug
   - `models.py` — DB models (broker_configs, alert_configs, predictions, background_results, whatsapp_configs)
   - `static/` — Frontend SPA vanilla (5 tabs + theme modes)
-- `tests/` — 303 tests Pytest
+- `tests/` — 304 tests Pytest
 - `docs/` — architecture, api-reference, indicators, deployment, frontend, whatsapp-gateway
 - `whatsapp-gateway/` — Node.js + Baileys WhatsApp gateway
 
@@ -46,7 +46,7 @@ docker compose up -d --build
 - Double click en charts resetea zoom
 
 ## Tests
-- 303 tests pasando, 2 skip (auth)
+- 304 tests pasando, 2 skip (auth)
 - Cobertura: background_analyzer 100%, prediction_service 98%, analysis_service 92%
 - Tests clave: test_strategies.py (50+), test_background_result.py (9), test_background_analyzer.py (34), test_ml_backtest.py (6)
 - Auth tests: skip (login deshabilitado)

@@ -17,6 +17,7 @@
     <button data-tab="analysis">Análisis</button>
     <button data-tab="alerts">Alertas</button>
     <button data-tab="options">Opciones</button>
+    <button data-tab="admin">Admin</button>
     <button data-tab="debug">Depuración</button>
   </nav>
   <div class="theme-controls">
@@ -688,6 +689,84 @@
         <span id="opt-debug-label" style="font-size:14px;font-weight:600;color:var(--muted)">Desactivado</span>
       </label>
     </div>
+  </div>
+
+</section>
+
+<!-- ══════════════════ ADMIN ══════════════════ -->
+<section id="tab-admin" class="tab">
+
+  <h2 style="margin-bottom:16px">Administración de Servicios</h2>
+
+  <div class="grid-2col" id="admin-grid">
+
+    <div class="card">
+      <h3>🚀 API <span class="badge admin-ok" id="admin-api-status">● OK</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Versión</span><span id="admin-api-version">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Uptime</span><span id="admin-api-uptime">—</span></div>
+    </div>
+
+    <div class="card">
+      <h3>🗄️ Base de Datos <span class="badge" id="admin-db-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Tablas</span><span id="admin-db-tables">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Registros totales</span><span id="admin-db-records">—</span></div>
+    </div>
+
+    <div class="card">
+      <h3>📡 Redis <span class="badge" id="admin-redis-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Estado</span><span id="admin-redis-detail">—</span></div>
+    </div>
+
+    <div class="card">
+      <h3>🤖 WhatsApp <span class="badge" id="admin-wa-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Conexión</span><span id="admin-wa-connection">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Teléfono</span><span id="admin-wa-phone">—</span></div>
+      <div class="admin-row" style="margin-top:8px">
+        <button class="btn outline sm" onclick="showTab('options')">⚙️ Ir a Config</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>⚙️ Background Analyzer <span class="badge" id="admin-bg-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Tickers</span><span id="admin-bg-tickers">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Estrategia</span><span id="admin-bg-strategy">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Intervalo</span><span id="admin-bg-interval">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Última ejecución</span><span id="admin-bg-lastrun">—</span></div>
+      <div class="admin-row" style="margin-top:8px">
+        <button class="btn outline sm" onclick="showTab('options')">⚙️ Ir a Config</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🧠 ML Model <span class="badge" id="admin-ml-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Estado</span><span id="admin-ml-trained">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Accuracy</span><span id="admin-ml-accuracy">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Muestras</span><span id="admin-ml-samples">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Entrenado</span><span id="admin-ml-date">—</span></div>
+      <div class="admin-row" style="margin-top:8px">
+        <button class="btn outline sm" onclick="showTab('options')">⚙️ Ir a Config</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🔌 Broker <span class="badge" id="admin-broker-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Activo</span><span id="admin-broker-name">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Conectado</span><span id="admin-broker-connected">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Sandbox</span><span id="admin-broker-sandbox">—</span></div>
+      <div class="admin-row" style="margin-top:8px">
+        <button class="btn outline sm" onclick="showTab('options')">⚙️ Ir a Config</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📝 Depuración <span class="badge" id="admin-debug-status">●</span></h3>
+      <div class="admin-row"><span class="admin-lbl">Estado</span><span id="admin-debug-enabled">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Entradas en log</span><span id="admin-debug-entries">—</span></div>
+      <div class="admin-row" style="margin-top:8px">
+        <button class="btn outline sm" onclick="showTab('options')">⚙️ Ir a Config</button>
+      </div>
+    </div>
+
   </div>
 
 </section>

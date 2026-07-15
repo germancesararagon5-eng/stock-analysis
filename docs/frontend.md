@@ -14,11 +14,11 @@ Archivos: `app/static/index.html` (643 líneas), `app/static/app.js` (1698 líne
 
 ## Estructura de la SPA
 
-### index.html — 5 tabs principales
+### index.html — 6 tabs principales
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  Header: Logo + Navigation (5 tabs)               │
+│  Header: Logo + Navigation (6 tabs)               │
 ├──────────────────────────────────────────────────┤
 │                                                   │
 │  Tab 1: Dashboard                                 │
@@ -40,13 +40,24 @@ Archivos: `app/static/index.html` (643 líneas), `app/static/app.js` (1698 líne
 │                                                   │
 │  Tab 4: Opciones                                  │
 │   ├── Background analyzer (start/stop/config)     │
+│   ├── ML Backtesting (train + compare)            │
 │   ├── Predicciones (stats + historial + resolve)  │
 │   ├── Trading simulator (P&L, win rate)           │
 │   ├── WhatsApp config (QR + phone number)          │
 │   ├── Broker config (switch + status)             │
 │   └── Debug toggle                                │
 │                                                   │
-│  Tab 5: Depuración                                │
+│  Tab 5: Admin                                     │
+│   ├── API status (version, uptime)                │
+│   ├── DB status (tables, records)                 │
+│   ├── Redis status                                 │
+│   ├── WhatsApp connection                          │
+│   ├── Background analyzer status                   │
+│   ├── ML Model status                              │
+│   ├── Broker status                                │
+│   └── Debug status                                 │
+│                                                   │
+│  Tab 6: Depuración                                │
 │   ├── Live polling de requests                    │
 │   ├── Strategy evaluations                        │
 │   ├── Broker events                               │
