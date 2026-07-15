@@ -990,7 +990,17 @@ def run_strategy(df: pl.DataFrame, strategy: str = "scalping") -> dict[str, Any]
         raise ValueError(f"Estrategia '{strategy}' no reconocida. Disponibles: {list(STRATEGY_MAP.keys())}")
     result = func(df)
     result["strategy_type"] = strategy
-    return _clean_nans(result)
+    result = _clean_nans(result)
+
+    if isinstance(result.get("indicators"), dict) and "Volume" in df.columns:
+        try:
+            vol_series = df["Volume"]
+            if len(vol_series) > 0 and vol_series[-1] is not None:
+                result["indicators"]["volume"] = round(float(vol_series[-1]), 0)
+        except Exception:
+            pass
+
+    return result
 
 
 # ═══════════════════════════════════════════════════════════════

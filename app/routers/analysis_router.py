@@ -174,7 +174,7 @@ POPULAR_TICKERS = [
     "WMT", "PG", "MA", "UNH", "HD", "DIS", "BAC", "NFLX", "ADBE", "CRM",
     "PEP", "KO", "INTC", "AMD", "CSCO", "NKE", "ABBV", "AVGO", "TXN", "QCOM",
     "COST", "PYPL", "UBER", "SPY", "QQQ", "DIA", "BTC-USD", "ETH-USD",
-    "SOL-USD", "BNB-USD", "XRP-USD", "GC=F", "CL=F",
+    "SOL-USD", "BNB-USD", "XRP-USD", "GC=F", "SI=F", "CL=F",
 ]
 
 

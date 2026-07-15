@@ -54,6 +54,16 @@
 - [x] Entrenar modelo ML con dataset de analysis_results (RandomForest, scikit-learn)
 - [x] Backtesting: comparar señales de ML vs señales de estrategias clásicas (GET /api/ml/backtest)
 
+## ✅ Completado (v2.6.0)
+
+- [x] **SI=F (Silver Futures)** agregado a POPULAR_TICKERS, sincronizado frontend/backend
+- [x] **POST /api/options/predictions/resolve-all** — resuelve todas las pendientes sin límite
+- [x] **Volumen tracking**: cada resolución de predicción captura el volumen del activo
+- [x] **Error % por operación**: desviación entre precio predecido y real en cada trade
+- [x] **Columnas Volumen y Error %** en tabla de Predicciones y Simulador de Trading
+- [x] **API Endpoints Details** en Admin: botón que expande lista de 20 endpoints + descripción
+- [x] **Refactor predicciones**: `_resolve_batch` + `_min_age_for_interval` a nivel módulo
+
 ## Media Prioridad
 
 - [x] Subir cobertura `background_analyzer.py` (100%)
@@ -63,5 +73,6 @@
 
 ## Baja Prioridad
 
+- [ ] Persistencia de modelo ML en disco (pickle) para no perderlo al reiniciar
 - [ ] Documentación OpenAPI (Swagger)
 - [x] Docker compose tests: 12 tests (compose YML válido, servicios requeridos, puertos, volúmenes, Dockerfiles)

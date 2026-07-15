@@ -56,15 +56,94 @@ def store_prediction(
 DEFAULT_THRESHOLD_PCT = 0.0  # Minimum price change % to consider correct
 
 
+def _min_age_for_interval(interval: str) -> timedelta:
+    mins = INTERVAL_MINUTES.get(interval, 5)
+    return timedelta(minutes=max(1, min(mins, 60)))
+
+
+def resolve_all_predictions(threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> int:
+    db: Session = None
+    try:
+        db = SessionLocal()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        pending = (
+            db.query(Prediction)
+            .filter(Prediction.outcome == "PENDING")
+            .filter(Prediction.created_at < now - timedelta(minutes=1))
+            .order_by(Prediction.created_at.asc())
+            .all()
+        )
+        return _resolve_batch(db, pending, now, threshold_pct)
+    except Exception as e:
+        logger.error("Error resolving all predictions: %s", e)
+        if db is not None:
+            db.rollback()
+        return 0
+    finally:
+        if db is not None:
+            db.close()
+
+
+def _resolve_batch(
+    db: Session, pending: list, now: datetime, threshold_pct: float
+) -> int:
+    from app.services.analysis_service import run_analysis
+
+    resolved = 0
+    for pred in pending:
+        age_limit = _min_age_for_interval(pred.interval or "5m")
+        if pred.created_at and pred.created_at > now - age_limit:
+            continue
+        try:
+            result = run_analysis(
+                ticker=pred.ticker,
+                strategy=pred.strategy,
+                interval=pred.interval,
+                periods=max(pred.periods or 100, 20),
+            )
+            current_price = result.get("indicators", {}).get("price")
+            current_volume = result.get("indicators", {}).get("volume")
+            if current_price is None or pred.price_at_prediction is None:
+                continue
+
+            change_pct = ((current_price - pred.price_at_prediction) / pred.price_at_prediction) * 100
+            pred.price_at_outcome = current_price
+            pred.price_change_pct = round(change_pct, 2)
+            pred.resolved_at = now
+
+            if current_volume is not None:
+                snap = dict(pred.indicators_snapshot or {})
+                snap["volume"] = current_volume
+                pred.indicators_snapshot = snap
+
+            meets_threshold = abs(change_pct) >= threshold_pct
+            if pred.signal == "BUY":
+                pred.outcome = "CORRECT" if change_pct > 0 and meets_threshold else "INCORRECT"
+                pred.pnl = round(current_price - pred.price_at_prediction, 2)
+            elif pred.signal == "SELL":
+                pred.outcome = "CORRECT" if change_pct < 0 and meets_threshold else "INCORRECT"
+                pred.pnl = round(pred.price_at_prediction - current_price, 2)
+            else:
+                pred.outcome = "NEUTRAL"
+                pred.pnl = 0.0
+
+            pred.pnl_pct = round(pred.pnl / pred.price_at_prediction * 100, 2) if pred.price_at_prediction else 0.0
+            logger.info(
+                "Prediction %d resolved: %s (%+.2f%%, PnL=%+.2f)",
+                pred.id, pred.outcome, change_pct, pred.pnl or 0,
+            )
+            resolved += 1
+        except Exception as e:
+            logger.warning("Error resolving prediction %d: %s", pred.id, e)
+    db.commit()
+    return resolved
+
+
 def resolve_predictions(count: int = 50, threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> int:
     db: Session = None
     try:
         db = SessionLocal()
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-
-        def min_age_for_interval(interval: str) -> timedelta:
-            mins = INTERVAL_MINUTES.get(interval, 5)
-            return timedelta(minutes=max(1, min(mins, 60)))
 
         pending = (
             db.query(Prediction)
@@ -74,53 +153,7 @@ def resolve_predictions(count: int = 50, threshold_pct: float = DEFAULT_THRESHOL
             .limit(count)
             .all()
         )
-        resolved = 0
-        for pred in pending:
-            age_limit = min_age_for_interval(pred.interval or "5m")
-            if pred.created_at and pred.created_at > now - age_limit:
-                continue
-            try:
-                from app.services.analysis_service import run_analysis
-
-                result = run_analysis(
-                    ticker=pred.ticker,
-                    strategy=pred.strategy,
-                    interval=pred.interval,
-                    periods=max(pred.periods or 100, 20),
-                )
-                current_price = result.get("indicators", {}).get("price")
-                if current_price is None or pred.price_at_prediction is None:
-                    continue
-
-                change_pct = ((current_price - pred.price_at_prediction) / pred.price_at_prediction) * 100
-                pred.price_at_outcome = current_price
-                pred.price_change_pct = round(change_pct, 2)
-                pred.resolved_at = now
-
-                meets_threshold = abs(change_pct) >= threshold_pct
-
-                if pred.signal == "BUY":
-                    pred.outcome = "CORRECT" if change_pct > 0 and meets_threshold else "INCORRECT"
-                    pred.pnl = round(current_price - pred.price_at_prediction, 2)
-                elif pred.signal == "SELL":
-                    pred.outcome = "CORRECT" if change_pct < 0 and meets_threshold else "INCORRECT"
-                    pred.pnl = round(pred.price_at_prediction - current_price, 2)
-                else:
-                    pred.outcome = "NEUTRAL"
-                    pred.pnl = 0.0
-
-                pred.pnl_pct = round(pred.pnl / pred.price_at_prediction * 100, 2) if pred.price_at_prediction else 0.0
-
-                logger.info(
-                    "Prediction %d resolved: %s (%+.2f%%, PnL=%+.2f)",
-                    pred.id, pred.outcome, change_pct, pred.pnl or 0,
-                )
-                resolved += 1
-            except Exception as e:
-                logger.warning("Error resolving prediction %d: %s", pred.id, e)
-
-        db.commit()
-        return resolved
+        return _resolve_batch(db, pending, now, threshold_pct)
     except Exception as e:
         logger.error("Error resolving predictions: %s", e)
         if db is not None:
@@ -195,6 +228,7 @@ def get_trading_summary(ticker: Optional[str] = None) -> dict:
                 losses += 1
                 total_loss_pnl += pnl_val
 
+            snap = r.indicators_snapshot or {}
             trades.append({
                 "id": r.id,
                 "ticker": r.ticker,
@@ -204,6 +238,8 @@ def get_trading_summary(ticker: Optional[str] = None) -> dict:
                 "exit_price": r.price_at_outcome,
                 "pnl": pnl_val,
                 "pnl_pct": r.pnl_pct,
+                "error_pct": abs(r.price_change_pct) if r.price_change_pct is not None else None,
+                "volume": snap.get("volume"),
                 "outcome": r.outcome,
                 "strategy": r.strategy,
                 "interval": r.interval,
@@ -257,6 +293,8 @@ def get_predictions(
                 "outcome": r.outcome or "PENDING",
                 "price_at_outcome": r.price_at_outcome,
                 "price_change_pct": r.price_change_pct,
+                "error_pct": abs(r.price_change_pct) if r.price_change_pct is not None else None,
+                "volume": (r.indicators_snapshot or {}).get("volume"),
                 "pnl": r.pnl,
                 "pnl_pct": r.pnl_pct,
                 "created_at": r.created_at.isoformat() if r.created_at else None,

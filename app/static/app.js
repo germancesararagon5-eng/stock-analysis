@@ -45,7 +45,8 @@ const POPULAR_TICKERS = [
   {sym:'QQQ',name:'Invesco QQQ Trust'},{sym:'DIA',name:'SPDR Dow Jones ETF'},
   {sym:'BTC-USD',name:'Bitcoin USD'},{sym:'ETH-USD',name:'Ethereum USD'},
   {sym:'SOL-USD',name:'Solana USD'},{sym:'BNB-USD',name:'BNB USD'},
-  {sym:'XRP-USD',name:'XRP USD'},{sym:'GC=F',name:'Gold Futures'},
+  {sym:'XRP-USD',name:'XRP USD'},  {sym:'GC=F',name:'Gold Futures'},
+  {sym:'SI=F',name:'Silver Futures'},
   {sym:'CL=F',name:'Crude Oil Futures'},
 ];
 
@@ -1579,13 +1580,18 @@ async function loadPredictions(ticker) {
       const outcomeLabel = p.outcome === 'CORRECT' ? '✅' : p.outcome === 'INCORRECT' ? '❌' : '⏳';
       const outcomeCls = p.outcome === 'CORRECT' ? 'buy' : p.outcome === 'INCORRECT' ? 'sell' : 'neutral';
       const chgCls = p.price_change_pct > 0 ? 'pos' : p.price_change_pct < 0 ? 'neg' : '';
+      const errorStr = p.error_pct != null && p.outcome !== 'PENDING' ? '<span class="neg">' + p.error_pct.toFixed(2) + '%</span>' : '—';
+      const volStr = p.volume ? p.volume.toLocaleString() : '—';
       return `<tr>
         <td><strong>${p.ticker}</strong></td>
         <td><span class="badge ${p.signal === 'BUY' ? 'buy' : 'sell'}">${p.signal}</span></td>
         <td>${(p.confidence * 100).toFixed(0)}%</td>
         <td>${p.price_at_prediction ? '$' + p.price_at_prediction.toFixed(2) : '—'}</td>
+        <td>${p.price_at_outcome ? '$' + p.price_at_outcome.toFixed(2) : '—'}</td>
         <td><span class="badge ${outcomeCls}">${outcomeLabel} ${p.outcome}</span></td>
         <td class="${chgCls}">${p.price_change_pct != null ? (p.price_change_pct > 0 ? '+' : '') + p.price_change_pct + '%' : '—'}</td>
+        <td class="neg">${errorStr}</td>
+        <td style="font-size:11px">${volStr}</td>
         <td style="font-size:11px;color:var(--muted)">${p.created_at ? new Date(p.created_at).toLocaleString() : '—'}</td>
       </tr>`;
     }).join('');
@@ -1593,8 +1599,17 @@ async function loadPredictions(ticker) {
 }
 
 async function resolvePendingPredictions() {
-  const r = await api('POST', '/api/options/predictions/resolve?count=20');
+  const r = await api('POST', '/api/options/predictions/resolve?count=50');
   addLog('[PRED] Resueltas: ' + (r.resolved || 0), r.resolved > 0 ? 'ok' : 'err');
+  const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
+  loadPredictionStats(ticker);
+  loadPredictions(ticker);
+  loadTradingSummary();
+}
+
+async function resolveAllPredictions() {
+  const r = await api('POST', '/api/options/predictions/resolve-all');
+  addLog('[PRED] Resueltas todas: ' + (r.resolved || 0), r.resolved > 0 ? 'ok' : 'info');
   const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
   loadPredictionStats(ticker);
   loadPredictions(ticker);
@@ -1715,6 +1730,8 @@ async function loadTradingSummary(ticker) {
       const pnlPctStr = t.pnl_pct ? ((t.pnl_pct >= 0 ? '+' : '') + t.pnl_pct.toFixed(2) + '%') : '—';
       const outcomeLabel = t.outcome === 'CORRECT' ? '✅ Ganada' : '❌ Perdida';
       const outcomeCls = t.outcome === 'CORRECT' ? 'buy' : 'sell';
+      const errorStr = t.error_pct != null ? '<span class="neg">' + t.error_pct.toFixed(2) + '%</span>' : '—';
+      const volStr = t.volume ? t.volume.toLocaleString() : '—';
       return `<tr>
         <td><strong>${t.ticker}</strong></td>
         <td><span class="badge ${t.signal === 'BUY' ? 'buy' : 'sell'}">${t.signal}</span></td>
@@ -1722,6 +1739,8 @@ async function loadTradingSummary(ticker) {
         <td>${exit}</td>
         <td class="${pnlCls}">${pnlStr}</td>
         <td class="${pnlCls}">${pnlPctStr}</td>
+        <td class="neg">${errorStr}</td>
+        <td style="font-size:11px">${volStr}</td>
         <td><span class="badge ${outcomeCls}">${outcomeLabel}</span></td>
         <td style="font-size:11px;color:var(--muted)">${t.exited_at ? new Date(t.exited_at).toLocaleString() : '—'}</td>
       </tr>`;
@@ -1764,6 +1783,13 @@ async function loadAdminStatus() {
     document.getElementById('admin-api-status').outerHTML = _badge(s.api.status, 'OK');
     document.getElementById('admin-api-version').textContent = s.api.version;
     document.getElementById('admin-api-uptime').textContent = s.api.uptime;
+    document.getElementById('admin-api-endpoints').textContent = (s.api.endpoints || []).length + ' endpoints';
+    const list = document.getElementById('admin-api-endpoint-list');
+    if (list && s.api.endpoints) {
+      list.innerHTML = s.api.endpoints.map(e =>
+        `<div style="font-size:11px;padding:2px 0;border-bottom:1px solid var(--border)"><code style="color:var(--accent)">${e.method}</code> <b>${e.path}</b> <span style="color:var(--muted)">— ${e.desc}</span></div>`
+      ).join('');
+    }
 
     // DB
     document.getElementById('admin-db-status').outerHTML = _badge(s.database.status, s.database.status === 'ok' ? 'Conectada' : 'Error');
@@ -1923,6 +1949,13 @@ function initApp() {
   // ── Admin ──
   loadAdminStatus();
   setInterval(loadAdminStatus, 5000);
+  const apiDetailBtn = document.getElementById('admin-api-detail-btn');
+  if (apiDetailBtn) {
+    apiDetailBtn.addEventListener('click', () => {
+      const list = document.getElementById('admin-api-endpoint-list');
+      if (list) list.style.display = list.style.display === 'none' ? 'block' : 'none';
+    });
+  }
 
   // ── Predictions ──
   document.getElementById('pred-filter-btn').addEventListener('click', () => {
@@ -1931,6 +1964,8 @@ function initApp() {
     loadPredictions(ticker);
   });
   document.getElementById('pred-resolve-btn').addEventListener('click', resolvePendingPredictions);
+  const resolveAllBtn = document.getElementById('pred-resolve-all-btn');
+  if (resolveAllBtn) resolveAllBtn.addEventListener('click', resolveAllPredictions);
 
   // ── ML Backtesting ──
   loadMLBacktestStatus();

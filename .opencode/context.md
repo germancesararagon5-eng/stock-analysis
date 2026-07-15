@@ -75,13 +75,14 @@ Key: POST /api/analysis/technical-analysis (reglas → verdict+confidence+reason
 - **Documentación**: CHANGELOG 1.5.0 + 1.6.0, TASKS.md actualizado, estudio/04 y 05 actualizados, SKILL.md actualizado
 - **ML Backtesting**: RandomForest entrenado con indicators→outcome, comparación 6 estrategias vs ML
 - **Admin unificada**: GET /api/admin/status con estado de todos los servicios + data flow pipeline visual
+- **v2.6.0**: SI=F, resolve-all, Volumen tracking, Error % por operación, API endpoints details en Admin
 - Tests: 304 pasando, 2 skip (auth)
 
 ### Próximos pasos
 - **[ALTA]** Tests de lógica real para estrategias (RSI <30→BUY, RSI >70→SELL, golden/death cross)
 - **[ALTA]** Subir cobertura prediction_service (61%)
 - **[MEDIA]** background_analyzer coverage, WebSocket tests, integración broker
-- **[BAJA]** Frontend tests (Playwright), OpenAPI/Swagger, Docker compose tests
+- **[BAJA]** Frontend tests (Playwright), OpenAPI/Swagger, Docker compose tests, persistencia ML pickle
 - **[MEDIA]** Persistencia de modelo ML en disco (pickle) para no perderlo al reiniciar
 
 Ver `TASKS.md` para lista completa actualizada.

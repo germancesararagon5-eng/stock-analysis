@@ -46,9 +46,9 @@ docker compose up -d --build
 - Double click en charts resetea zoom
 
 ## Tests
-- 304 tests pasando, 2 skip (auth)
+- 304 tests pasando, 2 skip (auth) — 156 tests core (strategies, predictions, ML, charts, admin)
 - Cobertura: background_analyzer 100%, prediction_service 98%, analysis_service 92%
-- Tests clave: test_strategies.py (50+), test_background_result.py (9), test_background_analyzer.py (34), test_ml_backtest.py (6), test_admin.py (1)
+- Tests clave: test_strategies.py (56), test_prediction_service.py + test_prediction_service_coverage.py (34), test_background_result.py (9), test_background_analyzer.py (34), test_ml_backtest.py (6), test_admin.py (1)
 - Auth tests: skip (login deshabilitado)
 
 ## Documentación

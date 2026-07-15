@@ -1,3 +1,16 @@
+stock-analysis (2.6.0) unstable; urgency=medium
+
+  * [ADD] SI=F (Silver Futures) a POPULAR_TICKERS — Oro, Plata y Petróleo disponibles
+  * [ADD] POST /api/options/predictions/resolve-all — resuelve TODAS las predicciones pendientes sin límite
+  * [ADD] Volumen de movimiento tracking — cada predicción almacena volumen del activo en el momento de resolución
+  * [ADD] Error % por operación — desviación porcentual entre precio predecido y precio real
+  * [ADD] Columnas Volumen y Error % en tabla de predicciones y simulador de trading
+  * [ADD] Botón "Resolver Todas" junto a "Resolver (50)" en pestaña Opciones
+  * [ADD] API endpoints details en Admin — botón "Ver Detalle de Endpoints" con los 20 endpoints principales
+  * [CHANGE] resolve_predictions ahora captura volumen al resolver cada predicción
+  * [CHANGE] run_strategy inyecta volume (último valor) en indicators dict automáticamente
+  * [INTERNAL] Refactor predicciones: _resolve_batch extraído para resolver all/lote, _min_age_for_interval a nivel módulo
+
 stock-analysis (2.5.0) unstable; urgency=medium
 
   * [ADD] ML Backtesting: RandomForest entrenado con indicators→outcome, comparación 6 estrategias vs ML

@@ -45,9 +45,31 @@ def get_service_status() -> dict:
 
     api_status = {
         "status": "ok",
-        "version": "2.5.0",
+        "version": "2.6.0",
         "uptime": f"{hours}h {mins}m",
         "uptime_seconds": int(uptime_secs),
+        "endpoints": [
+            {"path": "/api/analysis/technical-analysis", "method": "POST", "desc": "Análisis técnico completo de un ticker"},
+            {"path": "/api/analysis/data/{ticker}", "method": "GET", "desc": "Datos OHLCV históricos"},
+            {"path": "/api/analysis/chart/{ticker}", "method": "GET", "desc": "Datos para gráfico (close, indicadores)"},
+            {"path": "/api/analysis/top-ranking", "method": "GET", "desc": "Top ranking por confianza (paralelizado)"},
+            {"path": "/api/analysis/market-summary", "method": "GET", "desc": "Resumen de mercado multi-ticker"},
+            {"path": "/api/config/*", "method": "GET/POST", "desc": "Configuración del broker activo"},
+            {"path": "/api/alerts/*", "method": "GET/POST/DELETE", "desc": "Alertas programadas por ticker"},
+            {"path": "/api/options/background/*", "method": "GET/POST", "desc": "Background analyzer (start/stop/config)"},
+            {"path": "/api/options/predictions/*", "method": "GET/POST", "desc": "Predicciones, estadísticas, resolución"},
+            {"path": "/api/options/trading/summary", "method": "GET", "desc": "Simulador de trading (P&L, win rate)"},
+            {"path": "/api/options/whatsapp/*", "method": "GET/POST", "desc": "Config WhatsApp"},
+            {"path": "/api/options/broker/*", "method": "GET", "desc": "Estado y lista de brokers"},
+            {"path": "/api/options/debug/*", "method": "GET/POST", "desc": "Control de depuración"},
+            {"path": "/api/ml/train", "method": "POST", "desc": "Entrenar modelo RandomForest"},
+            {"path": "/api/ml/backtest", "method": "GET", "desc": "Backtest ML vs 6 estrategias"},
+            {"path": "/api/ml/status", "method": "GET", "desc": "Estado del modelo ML"},
+            {"path": "/api/ml/dataset", "method": "GET", "desc": "Exportar dataset ML como JSON"},
+            {"path": "/api/admin/status", "method": "GET", "desc": "Estado de todos los servicios + data flow"},
+            {"path": "/api/debug/*", "method": "GET/POST", "desc": "Logs de depuración"},
+            {"path": "/docs", "method": "GET", "desc": "Swagger UI (OpenAPI)"},
+        ],
     }
 
     db_status = {"status": "ok"}

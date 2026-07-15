@@ -9,6 +9,7 @@ from app.services.prediction_service import (
     get_prediction_stats,
     get_predictions,
     get_trading_summary,
+    resolve_all_predictions,
 )
 from app.services.prediction_service import (
     resolve_predictions as resolve_preds,
@@ -116,6 +117,14 @@ def predictions_resolve(
     threshold: float = Query(0.0, ge=0.0, le=100.0, description="Cambio de precio mínimo % para considerar correcta"),
 ):
     resolved = resolve_preds(count=count, threshold_pct=threshold)
+    return {"resolved": resolved}
+
+
+@router.post("/predictions/resolve-all", summary="Resolver TODAS las predicciones pendientes")
+def predictions_resolve_all(
+    threshold: float = Query(0.0, ge=0.0, le=100.0, description="Cambio de precio mínimo % para considerar correcta"),
+):
+    resolved = resolve_all_predictions(threshold_pct=threshold)
     return {"resolved": resolved}
 
 

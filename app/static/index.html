@@ -548,7 +548,8 @@
         <input type="text" id="pred-filter" placeholder="AAPL" style="width:100px;margin:0" value="">
       </label>
       <button class="btn outline sm" id="pred-filter-btn">Filtrar</button>
-      <button class="btn outline sm" id="pred-resolve-btn">Resolver Pendientes</button>
+      <button class="btn outline sm" id="pred-resolve-btn">Resolver (50)</button>
+      <button class="btn outline sm" id="pred-resolve-all-btn">Resolver Todas</button>
     </div>
   </div>
 
@@ -556,7 +557,7 @@
     <h2>Historial de Predicciones</h2>
     <table>
       <thead><tr>
-        <th>Ticker</th><th>Señal</th><th>Confianza</th><th>Precio</th><th>Resultado</th><th>Cambio</th><th>Fecha</th>
+        <th>Ticker</th><th>Señal</th><th>Confianza</th><th>Entrada</th><th>Salida</th><th>Resultado</th><th>Cambio</th><th>Error %</th><th>Volumen</th><th>Fecha</th>
       </tr></thead>
       <tbody id="pred-tbody"></tbody>
     </table>
@@ -597,7 +598,7 @@
     <div id="trade-list" style="max-height:400px;overflow-y:auto">
       <table>
         <thead><tr>
-          <th>Ticker</th><th>Señal</th><th>Entrada</th><th>Salida</th><th>P&L</th><th>Rend.</th><th>Resultado</th><th>Fecha</th>
+          <th>Ticker</th><th>Señal</th><th>Entrada</th><th>Salida</th><th>P&L</th><th>Rend.</th><th>Error %</th><th>Volumen</th><th>Resultado</th><th>Fecha</th>
         </tr></thead>
         <tbody id="trade-tbody"></tbody>
       </table>
@@ -704,6 +705,11 @@
       <h3>🚀 API <span class="badge admin-ok" id="admin-api-status">● OK</span></h3>
       <div class="admin-row"><span class="admin-lbl">Versión</span><span id="admin-api-version">—</span></div>
       <div class="admin-row"><span class="admin-lbl">Uptime</span><span id="admin-api-uptime">—</span></div>
+      <div class="admin-row"><span class="admin-lbl">Endpoints</span><span id="admin-api-endpoints">—</span></div>
+      <div class="admin-row" style="margin-top:8px;flex-direction:column;align-items:stretch">
+        <button class="btn outline sm" id="admin-api-detail-btn" style="width:100%">📋 Ver Detalle de Endpoints</button>
+        <div id="admin-api-endpoint-list" style="display:none;margin-top:8px;max-height:400px;overflow-y:auto;background:var(--bg);border-radius:6px;padding:8px"></div>
+      </div>
     </div>
 
     <div class="card">

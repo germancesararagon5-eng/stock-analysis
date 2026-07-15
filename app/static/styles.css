@@ -275,6 +275,8 @@ pre.log { background: var(--bg); padding: 12px; border-radius: 6px;
 #trade-list td, #trade-list th { padding: 4px 6px; }
 .pnl-pos { color: var(--green); }
 .pnl-neg { color: var(--red); }
+.neg { color: var(--red); font-size: 12px; }
+.pos { color: var(--green); font-size: 12px; }
 
 /* ── Admin Tab ── */
 .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
