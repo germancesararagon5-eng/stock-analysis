@@ -61,9 +61,9 @@ const INFO = {
   },
   strategy: {
     title:'Estrategia de Trading',
-    desc:'Scalping busca ganancias rápidas en minutos usando EMA, RSI y Bollinger Bands. Swing busca tendencias de días a semanas usando MACD, SMA 200 y niveles de soporte/resistencia.',
-    link:'https://www.investopedia.com/terms/s/scalping.asp',
-    linkLabel:'Investopedia: Scalping vs Swing Trading',
+    desc:'Scalping (1m-5m): EMA, RSI, Bollinger. Swing (1d): MACD, SMA 200, S&R. Momentum: tendencia + RSI + volumen. Mean Reversion: RSI extremo + BB reversión. Breakout: BB squeeze + resistencia/soporte. Market Structure: máximos/mínimos + divergencia RSI.',
+    link:'https://www.investopedia.com/terms/t/trading-strategy.asp',
+    linkLabel:'Investopedia: Trading Strategies',
   },
   interval: {
     title:'Intervalo de Velas',
@@ -1264,7 +1264,30 @@ async function deleteAlert(id) {
 
 async function testWhatsApp() {
   const result = await api('POST', '/api/alerts/test-whatsapp');
-  addLog('[WHATSAPP] ' + result.status, result.status === 'sent' ? 'ok' : 'err');
+  showWhatsAppResult(result);
+}
+
+async function showWhatsAppResult(result) {
+  if (result.status === 'sent') {
+    addLog('[WHATSAPP] ✅ Mensaje de prueba enviado', 'ok');
+    alert('✅ Mensaje de prueba enviado por WhatsApp');
+    return;
+  }
+
+  const reason = result.reason || result.error || result.status;
+  addLog('[WHATSAPP] ❌ ' + reason, 'err');
+
+  let tip = '';
+  if (reason.includes('no disponible') || reason.includes('conectar')) {
+    tip = 'El gateway de WhatsApp no está corriendo.\n\nPara iniciarlo:\n  cd whatsapp-gateway && node index.js\n\nDespués abrí http://localhost:3001/qr para escanear el QR.';
+  } else if (reason.includes('autenticado') || reason.includes('QR') || reason.includes('connected')) {
+    tip = 'El gateway está corriendo pero no está autenticado.\n\nAbrí http://localhost:3001/qr en el navegador y escaneá el código QR con WhatsApp.';
+  } else if (reason.includes('target number') || reason.includes('número') || reason.includes('No target')) {
+    tip = 'No hay número de teléfono configurado.\n\nIngresá tu número en el campo "Mi número" de la sección WhatsApp y guardalo.';
+  }
+
+  const msg = '❌ WhatsApp: ' + reason + (tip ? '\n\n── Cómo solucionarlo ──\n' + tip : '');
+  alert(msg);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1352,6 +1375,7 @@ async function loadOptions() {
   // ── Background status ──
   await loadBackgroundStatus();
   await loadBackgroundResults();
+  await loadMLStats();
 
   // ── Prediction stats ──
   const predTicker = document.getElementById('pred-filter').value.trim().toUpperCase();
@@ -1417,16 +1441,40 @@ async function configureBackgroundAnalyzer() {
 
 async function loadBackgroundResults() {
   try {
-    const r = await api('GET', '/api/options/background/results?limit=20');
+    const r = await api('GET', '/api/options/background/results?limit=50');
     const card = document.getElementById('bg-results-card');
-    const pre = document.getElementById('bg-results');
+    const tbody = document.getElementById('bg-results-tbody');
     if (!r.results || !r.results.length) {
       card.style.display = 'none';
       return;
     }
     card.style.display = 'block';
     document.getElementById('bg-results-count').textContent = r.results.length;
-    pre.textContent = JSON.stringify(r.results, null, 2);
+    tbody.innerHTML = r.results.map(row => {
+      const signalClass = row.signal === 'BUY' ? 'badge buy' : row.signal === 'SELL' ? 'badge sell' : '';
+      const conf = (row.confidence * 100).toFixed(0);
+      const time = row.created_at ? new Date(row.created_at).toLocaleString() : '—';
+      return `<tr><td>${row.ticker}</td><td style="font-size:11px">${row.strategy || '—'}</td><td class="${signalClass}">${row.signal}</td><td>${conf}%</td><td>${row.price ? '$' + row.price : '—'}</td><td style="font-size:11px;color:var(--muted)">${time}</td></tr>`;
+    }).join('');
+  } catch (_) {}
+}
+
+async function loadMLStats() {
+  try {
+    const s = await api('GET', '/api/ml/stats');
+    const card = document.getElementById('ml-card');
+    card.style.display = s.total_records > 0 ? 'block' : 'none';
+    document.getElementById('ml-total').textContent = s.total_records || 0;
+    document.getElementById('ml-win').textContent = s.win || 0;
+    document.getElementById('ml-loss').textContent = s.loss || 0;
+    document.getElementById('ml-winrate').textContent = (s.win_rate || 0) + '%';
+    const stratDiv = document.getElementById('ml-by-strategy');
+    if (s.by_strategy) {
+      stratDiv.innerHTML = Object.entries(s.by_strategy).map(([name, st]) => {
+        const wr = st.total > 0 ? ((st.win / st.total) * 100).toFixed(0) : 0;
+        return `<span style="margin-right:12px"><b>${name}</b>: ${st.total} runs, ${wr}% win</span>`;
+      }).join('');
+    }
   } catch (_) {}
 }
 
@@ -1453,20 +1501,28 @@ async function loadWhatsAppConfig() {
       document.getElementById('wa-connected-phone').textContent = c.phone || c.phone_number || '—';
       statusEl.textContent = '✅ Conectado';
       statusEl.style.color = 'var(--green)';
+      statusEl.style.fontWeight = 'bold';
+    } else if (c.gateway_reachable === false) {
+      connectedInfo.style.display = 'none';
+      disconnectedInfo.style.display = 'block';
+      statusEl.textContent = '🔴 Gateway no disponible. Ejecutá: cd whatsapp-gateway && node index.js';
+      statusEl.style.color = 'var(--red)';
+      statusEl.style.fontWeight = 'bold';
     } else {
       connectedInfo.style.display = 'none';
       disconnectedInfo.style.display = 'block';
-      statusEl.textContent = c.phone_number ? '⚠️ Número guardado, esperando conexión' : 'No configurado';
-      statusEl.style.color = 'var(--muted)';
+      const qrHint = c.phone_number
+        ? '⚠️ Gateway activo, escaneá el QR en http://localhost:3001/qr'
+        : '⚠️ Gateway activo, falta configurar número y escanear QR';
+      statusEl.textContent = qrHint;
+      statusEl.style.color = 'var(--yellow)';
     }
   } catch (_) {}
 }
 
 async function testWhatsAppFromOptions() {
   const result = await api('POST', '/api/alerts/test-whatsapp');
-  const msg = result.status === 'sent' ? '✅ Mensaje de prueba enviado' : '❌ Error: ' + (result.reason || result.error || result.status);
-  addLog('[WHATSAPP] ' + msg, result.status === 'sent' ? 'ok' : 'err');
-  alert(msg);
+  showWhatsAppResult(result);
 }
 
 async function saveWhatsAppConfig() {
@@ -1606,6 +1662,26 @@ function stopOptionsPoll() {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  THEME
+// ════════════════════════════════════════════════════════════════
+
+function setTheme(theme) {
+  const root = document.documentElement;
+  root.classList.remove('light-mode', 'grey-mode');
+  if (theme !== 'dark') root.classList.add(theme + '-mode');
+  localStorage.setItem('theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme') || 'dark';
+  setTheme(saved);
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.addEventListener('click', () => setTheme(b.dataset.theme));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
 //  INIT
 // ════════════════════════════════════════════════════════════════
 
@@ -1678,6 +1754,9 @@ function initApp() {
 
   // ── Info popups ──
   initInfoPopups();
+
+  // ── Theme ──
+  initTheme();
 }
 
 // Inicializar directamente (login deshabilitado)

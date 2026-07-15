@@ -19,6 +19,11 @@
     <button data-tab="options">Opciones</button>
     <button data-tab="debug">Depuración</button>
   </nav>
+  <div class="theme-controls">
+    <button class="theme-btn active" data-theme="dark" title="Oscuro">Dark</button>
+    <button class="theme-btn" data-theme="grey" title="Gris">Grey</button>
+    <button class="theme-btn" data-theme="light" title="Claro">Light</button>
+  </div>
 </header>
 
 <main>
@@ -129,8 +134,12 @@
       </h2>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <select id="tr-strategy" style="width:auto;margin:0;padding:6px 10px;font-size:12px">
-          <option value="scalping">Scalping</option>
-          <option value="swing">Swing</option>
+          <option value="scalping">⚡ Scalping (rápido)</option>
+          <option value="swing">📈 Swing (días/semanas)</option>
+          <option value="momentum">🚀 Momentum (tendencia fuerte)</option>
+          <option value="mean_reversion">🔄 Mean Reversion (rebote)</option>
+          <option value="breakout">💥 Breakout (ruptura)</option>
+          <option value="market_structure">📊 Market Structure (estructura)</option>
         </select>
         <select id="tr-interval" style="width:auto;margin:0;padding:6px 10px;font-size:12px">
           <option value="1m">1m</option>
@@ -178,14 +187,18 @@
         </div>
       </div>
       <div class="col">
-        <label>Estrategia <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Estrategia</h3><p>Scalping: señales rápidas en 1m-5m. Swing: tendencias en 1d.</p><a href="https://www.investopedia.com/terms/s/scalping.asp" target="_blank">↗ Leer más</a></div></span></label>
+        <label>Estrategia <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Estrategias explicadas</h3><p><b>⚡ Scalping:</b> Compra y venta rápidas (cada minutos). Ideal para movimientos chicos. Usa medias móviles + RSI + Bandas de Bollinger.</p><p><b>📈 Swing:</b> Comprar y mantener varios días. Para seguir tendencias de mediano plazo. Usa MACD + medias móviles largas + soporte/resistencia.</p><p><b>🚀 Momentum:</b> Detecta acciones que suben fuerte con volumen. Compra cuando hay impulso alcista claro.</p><p><b>🔄 Mean Reversion:</b> Compra cuando está muy barata, vende cuando está muy cara. Asume que el precio vuelve a su valor normal.</p><p><b>💥 Breakout:</b> Detecta cuando el precio rompe un techo o piso importante. Compra en rupturas al alza.</p><p><b>📊 Market Structure:</b> Analiza máximos y mínimos para entender si el mercado está en tendencia alcista, bajista o lateral.</p><p style="margin-top:8px;font-size:11px;color:var(--muted)">Tip: si no sabés cuál usar, empezá con <b>Scalping (rápido)</b> para intradía o <b>Swing (días)</b> para inversiones más tranquilas.</p><a href="https://www.investopedia.com/terms/t/trading-strategy.asp" target="_blank">↗ Leer más en Investopedia</a></div></span></label>
         <select id="an-strategy">
-          <option value="scalping">Scalping (Corto Plazo)</option>
-          <option value="swing">Swing (Largo Plazo)</option>
+          <option value="scalping">⚡ Scalping — rápido (minutos)</option>
+          <option value="swing">📈 Swing — tendencia (días)</option>
+          <option value="momentum">🚀 Momentum — subida fuerte</option>
+          <option value="mean_reversion">🔄 Mean Reversion — rebote</option>
+          <option value="breakout">💥 Breakout — ruptura de nivel</option>
+          <option value="market_structure">📊 Market Structure — estructura</option>
         </select>
       </div>
       <div class="col">
-        <label>Intervalo <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Timeframe</h3><p>1m/5m scalping · 15m/1h intradía · 1d swing</p><a href="https://www.investopedia.com/terms/t/timeframe.asp" target="_blank">↗ Leer más</a></div></span></label>
+        <label>Intervalo <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Intervalo de tiempo</h3><p>Cada vela representa este período. A menor intervalo, más operaciones y más rápido.</p><p><b>1m / 5m:</b> Para Scalping (operaciones cada minutos). Muy rápido, muchas señales.</p><p><b>15m / 1h:</b> Para intradía. Operaciones cada horas. Balance entre velocidad y confiabilidad.</p><p><b>1d:</b> Para Swing. Una vela por día. Más lento, señales más confiables. Ideal para empezar.</p><p style="margin-top:8px;font-size:11px;color:var(--muted)">Tip: si no sabés, empezá con <b>1 día</b> y estrategia <b>Swing</b>.</p><a href="https://www.investopedia.com/terms/t/timeframe.asp" target="_blank">↗ Leer más</a></div></span></label>
         <select id="an-interval">
           <option value="1m">1 minuto</option>
           <option value="5m" selected>5 minutos</option>
@@ -240,6 +253,42 @@
         </ul>
       </div>
     </div>
+    <div class="row" style="margin-top:12px">
+      <div class="col">
+        <strong>Momentum</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:var(--muted);line-height:1.8">
+          <li>Tendencia EMA + pendiente → ±40%</li>
+          <li>RSI momentum (60+) → ±25%</li>
+          <li>Volumen relativo → ±20%</li>
+        </ul>
+      </div>
+      <div class="col">
+        <strong>Mean Reversion</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:var(--muted);line-height:1.8">
+          <li>RSI extremo (&lt;25 / &gt;75) → ±40%</li>
+          <li>Bollinger toque extremo → ±30%</li>
+          <li>Confirmación EMA → ±15%</li>
+        </ul>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div class="col">
+        <strong>Breakout</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:var(--muted);line-height:1.8">
+          <li>Bollinger squeeze → ±35%</li>
+          <li>Precio fuera de BB + volumen → ±30%</li>
+          <li>Niveles S/R → ±20%</li>
+        </ul>
+      </div>
+      <div class="col">
+        <strong>Market Structure</strong>
+        <ul style="margin:8px 0 0 16px;font-size:13px;color:var(--muted);line-height:1.8">
+          <li>Máximos/mínimos crecientes → ±35%</li>
+          <li>Divergencia RSI → ±30%</li>
+          <li>Quiebre de estructura → ±25%</li>
+        </ul>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -269,17 +318,21 @@
       <div class="col">
         <label>Estrategia</label>
         <select id="al-strategy">
-          <option value="scalping">Scalping</option>
-          <option value="swing">Swing</option>
+          <option value="scalping">⚡ Scalping — rápido</option>
+          <option value="swing">📈 Swing — tendencia</option>
+          <option value="momentum">🚀 Momentum — subida fuerte</option>
+          <option value="mean_reversion">🔄 Mean Reversion — rebote</option>
+          <option value="breakout">💥 Breakout — ruptura</option>
+          <option value="market_structure">📊 Market Structure — estructura</option>
         </select>
       </div>
       <div class="col">
-        <label>Condición</label>
+        <label>Condición <span class="info-wrap" style="display:inline-block;vertical-align:middle"><span class="info-trigger" style="width:14px;height:14px;font-size:9px">i</span><div class="info-popup"><h3>Condiciones explicadas</h3><p><b>🔀 Crossover:</b> Una media móvil rápida cruza una lenta. Señal de que la tendencia está cambiando.</p><p><b>⬇ RSI Sobrevendido:</b> El RSI baja de 30. La acción está muy barata y podría rebotar al alza.</p><p><b>⬆ RSI Sobrecomprado:</b> El RSI sube de 70. La acción está muy cara y podría caer.</p><p><b>📉 Toque de Banda:</b> El precio toca la banda inferior o superior de Bollinger. Señal de que el movimiento se está exagerando.</p></div></span></label>
         <select id="al-condition">
-          <option value="crossover">Crossover EMA/MACD</option>
-          <option value="rsi_oversold">RSI Sobrevendido</option>
-          <option value="rsi_overbought">RSI Sobrecomprado</option>
-          <option value="bb_touch">Toque de Banda</option>
+          <option value="crossover">🔀 Crossover (cruce de medias)</option>
+          <option value="rsi_oversold">⬇ RSI Sobrevendido (muy barato)</option>
+          <option value="rsi_overbought">⬆ RSI Sobrecomprado (muy caro)</option>
+          <option value="bb_touch">📉 Toque de Banda de Bollinger</option>
         </select>
       </div>
       <div class="col">
@@ -343,8 +396,13 @@
       <div class="col">
         <label>Estrategia</label>
         <select id="bg-strategy">
-          <option value="scalping">Scalping (Corto Plazo)</option>
-          <option value="swing">Swing (Largo Plazo)</option>
+          <option value="all" selected>🔀 TODAS las estrategias</option>
+          <option value="scalping">⚡ Scalping — rápido (minutos)</option>
+          <option value="swing">📈 Swing — tendencia (días)</option>
+          <option value="momentum">🚀 Momentum — subida fuerte</option>
+          <option value="mean_reversion">🔄 Mean Reversion — rebote</option>
+          <option value="breakout">💥 Breakout — ruptura de nivel</option>
+          <option value="market_structure">📊 Market Structure — estructura</option>
         </select>
       </div>
     </div>
@@ -353,10 +411,10 @@
         <label>Intervalo de velas</label>
         <select id="bg-interval">
           <option value="1m">1 minuto</option>
-          <option value="5m" selected>5 minutos</option>
+          <option value="5m">5 minutos</option>
           <option value="15m">15 minutos</option>
           <option value="1h">1 hora</option>
-          <option value="1d">1 día</option>
+          <option value="1d" selected>1 día</option>
         </select>
       </div>
       <div class="col">
@@ -383,9 +441,33 @@
   <div class="card" id="bg-results-card" style="display:none">
     <h2>Resultados del Analizador en Segundo Plano</h2>
     <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">
-      Mostrando las últimas <span id="bg-results-count">0</span> ejecuciones
+      Mostrando las últimas <span id="bg-results-count">0</span> ejecuciones (multi-estrategia)
     </div>
-    <pre class="log" id="bg-results" style="max-height:400px">Sin resultados aún</pre>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Ticker</th><th>Estrategia</th><th>Señal</th><th>Confianza</th><th>Precio</th><th>Hora</th></tr></thead>
+        <tbody id="bg-results-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ML Dataset Stats ── -->
+  <div class="card" id="ml-card" style="display:none">
+    <h2>Dataset para Machine Learning</h2>
+    <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">
+      Cada análisis se guarda automáticamente con todos los indicadores. Usá este dataset para entrenar modelos.
+    </div>
+    <div class="row" id="ml-stats-grid" style="gap:8px;margin-bottom:12px">
+      <div class="stat-mini"><span class="stat-mini-val" id="ml-total">0</span><span class="stat-mini-lbl">Registros totales</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="ml-win">0</span><span class="stat-mini-lbl">WIN</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="ml-loss">0</span><span class="stat-mini-lbl">LOSS</span></div>
+      <div class="stat-mini"><span class="stat-mini-val" id="ml-winrate">0%</span><span class="stat-mini-lbl">Win Rate</span></div>
+    </div>
+    <div id="ml-by-strategy" style="font-size:12px;color:var(--muted)"></div>
+    <div style="margin-top:8px">
+      <a href="/api/ml/dataset" target="_blank" class="btn sm outline">📥 Exportar dataset JSON</a>
+      <a href="/api/ml/stats" target="_blank" class="btn sm outline">📊 Estadísticas</a>
+    </div>
   </div>
 
   <!-- ── Prediction Stats ── -->
@@ -490,7 +572,7 @@
         ✅ Conectado como <span id="wa-connected-phone">—</span>
       </div>
       <div id="wa-disconnected-info" style="font-size:13px;color:var(--muted)">
-        ⏳ Esperando conexión...
+        ⏳ Verificando conexión...
       </div>
       <button class="btn sm outline" id="wa-test-btn">📨 Probar WhatsApp</button>
     </div>
