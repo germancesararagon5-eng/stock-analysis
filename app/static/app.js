@@ -1608,12 +1608,32 @@ async function resolvePendingPredictions() {
 }
 
 async function resolveAllPredictions() {
-  const r = await api('POST', '/api/options/predictions/resolve-all');
-  addLog('[PRED] Resueltas todas: ' + (r.resolved || 0), r.resolved > 0 ? 'ok' : 'info');
-  const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
-  loadPredictionStats(ticker);
-  loadPredictions(ticker);
-  loadTradingSummary();
+  const btn = document.getElementById('pred-resolve-all-btn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Resolviendo...';
+  try {
+    const r = await api('POST', '/api/options/predictions/resolve-all');
+    const total = r.total || 0;
+    const resolved = r.resolved || 0;
+    const errors = r.errors || 0;
+    if (total === 0) {
+      addLog('[PRED] No hay predicciones pendientes', 'info');
+    } else if (resolved === total) {
+      addLog(`[PRED] ✅ Resueltas ${resolved}/${total} predicciones`, 'ok');
+    } else {
+      addLog(`[PRED] ⚠️ Resueltas ${resolved}/${total} (${errors} errores)`, errors > 0 ? 'err' : 'info');
+    }
+    const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
+    loadPredictionStats(ticker);
+    loadPredictions(ticker);
+    loadTradingSummary();
+  } catch (e) {
+    addLog('[PRED] Error al resolver todas: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
 }
 
 // ── ML Backtesting ────────────────────────────────────────

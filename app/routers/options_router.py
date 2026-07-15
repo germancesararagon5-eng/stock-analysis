@@ -124,8 +124,7 @@ def predictions_resolve(
 def predictions_resolve_all(
     threshold: float = Query(0.0, ge=0.0, le=100.0, description="Cambio de precio mínimo % para considerar correcta"),
 ):
-    resolved = resolve_all_predictions(threshold_pct=threshold)
-    return {"resolved": resolved}
+    return resolve_all_predictions(threshold_pct=threshold)
 
 
 # ── Trading Simulator ────────────────────────────────────────

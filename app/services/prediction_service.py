@@ -61,7 +61,7 @@ def _min_age_for_interval(interval: str) -> timedelta:
     return timedelta(minutes=max(1, min(mins, 60)))
 
 
-def resolve_all_predictions(threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> int:
+def resolve_all_predictions(threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> dict:
     db: Session = None
     try:
         db = SessionLocal()
@@ -73,12 +73,14 @@ def resolve_all_predictions(threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> int
             .order_by(Prediction.created_at.asc())
             .all()
         )
-        return _resolve_batch(db, pending, now, threshold_pct)
+        total = len(pending)
+        resolved = _resolve_batch(db, pending, now, threshold_pct)
+        return {"resolved": resolved, "total": total, "errors": total - resolved}
     except Exception as e:
         logger.error("Error resolving all predictions: %s", e)
         if db is not None:
             db.rollback()
-        return 0
+        return {"resolved": 0, "total": 0, "errors": 0}
     finally:
         if db is not None:
             db.close()

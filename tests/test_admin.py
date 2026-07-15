@@ -15,6 +15,6 @@ def test_admin_status_endpoint(client):
     assert "debug" in data
 
     assert data["api"]["status"] == "ok"
-    assert data["api"]["version"] == "2.5.0"
+    assert data["api"]["version"] == "2.6.0"
     assert data["ml_model"]["status"] in ("trained", "not_trained")
     assert data["debug"]["status"] in ("enabled", "disabled")
