@@ -8,6 +8,7 @@ from app.services.background_analyzer import background_analyzer
 from app.services.prediction_service import (
     get_prediction_stats,
     get_predictions,
+    get_resolve_progress,
     get_trading_summary,
     resolve_all_predictions,
 )
@@ -120,7 +121,12 @@ def predictions_resolve(
     return {"resolved": resolved}
 
 
-@router.post("/predictions/resolve-all", summary="Resolver TODAS las predicciones pendientes")
+@router.get("/predictions/resolve-progress", summary="Progreso de resolución en background")
+def predictions_resolve_progress():
+    return get_resolve_progress()
+
+
+@router.post("/predictions/resolve-all", summary="Resolver TODAS las predicciones pendientes (background)")
 def predictions_resolve_all(
     threshold: float = Query(0.0, ge=0.0, le=100.0, description="Cambio de precio mínimo % para considerar correcta"),
 ):

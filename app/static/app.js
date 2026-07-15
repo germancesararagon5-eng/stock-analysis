@@ -1611,26 +1611,49 @@ async function resolveAllPredictions() {
   const btn = document.getElementById('pred-resolve-all-btn');
   const origText = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '⏳ Resolviendo...';
+  btn.textContent = '⏳ Iniciando...';
   try {
     const r = await api('POST', '/api/options/predictions/resolve-all');
-    const total = r.total || 0;
-    const resolved = r.resolved || 0;
-    const errors = r.errors || 0;
-    if (total === 0) {
-      addLog('[PRED] No hay predicciones pendientes', 'info');
-    } else if (resolved === total) {
-      addLog(`[PRED] ✅ Resueltas ${resolved}/${total} predicciones`, 'ok');
+    if (r.status === 'already_running') {
+      addLog('[PRED] Ya hay una resolución en curso', 'info');
+    } else if (r.status === 'started') {
+      addLog(`[PRED] Resolviendo ${r.total} predicciones en background...`, 'info');
+      btn.textContent = '⏳ Resolviendo...';
+      // Poll progress
+      const poll = setInterval(async () => {
+        const p = await api('GET', '/api/options/predictions/resolve-progress');
+        if (p.status === 'done') {
+          clearInterval(poll);
+          const total = p.total || 0;
+          const resolved = p.resolved || 0;
+          const errors = p.errors || 0;
+          if (total === 0) {
+            addLog('[PRED] No había predicciones pendientes', 'info');
+          } else {
+            addLog(`[PRED] ✅ Resueltas ${resolved}/${total}${errors ? ' (${errors} errores)' : ''}`, errors > 0 ? 'err' : 'ok');
+          }
+          const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
+          loadPredictionStats(ticker);
+          loadPredictions(ticker);
+          loadTradingSummary();
+          btn.disabled = false;
+          btn.textContent = origText;
+        } else if (p.status === 'error') {
+          clearInterval(poll);
+          addLog('[PRED] Error en resolución: ' + (p.error || 'desconocido'), 'err');
+          btn.disabled = false;
+          btn.textContent = origText;
+        } else if (p.status === 'running' && p.total > 0) {
+          btn.textContent = `⏳ ${p.resolved}/${p.total}`;
+        }
+      }, 2000);
     } else {
-      addLog(`[PRED] ⚠️ Resueltas ${resolved}/${total} (${errors} errores)`, errors > 0 ? 'err' : 'info');
+      addLog('[PRED] Respuesta inesperada: ' + JSON.stringify(r), 'err');
+      btn.disabled = false;
+      btn.textContent = origText;
     }
-    const ticker = document.getElementById('pred-filter').value.trim().toUpperCase();
-    loadPredictionStats(ticker);
-    loadPredictions(ticker);
-    loadTradingSummary();
   } catch (e) {
-    addLog('[PRED] Error al resolver todas: ' + e.message, 'err');
-  } finally {
+    addLog('[PRED] Error al iniciar resolución: ' + e.message, 'err');
     btn.disabled = false;
     btn.textContent = origText;
   }

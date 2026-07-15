@@ -1,4 +1,6 @@
 import logging
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -10,6 +12,9 @@ from app.models import Prediction
 logger = logging.getLogger(__name__)
 
 INTERVAL_MINUTES = {"1m": 1, "5m": 5, "15m": 15, "1h": 60, "1d": 1440}
+
+_RESOLVE_PROGRESS: dict = {"status": "idle", "resolved": 0, "total": 0, "errors": 0}
+_RESOLVE_LOCK = threading.Lock()
 
 
 def store_prediction(
@@ -62,28 +67,64 @@ def _min_age_for_interval(interval: str) -> timedelta:
 
 
 def resolve_all_predictions(threshold_pct: float = DEFAULT_THRESHOLD_PCT) -> dict:
-    db: Session = None
-    try:
-        db = SessionLocal()
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
-        pending = (
-            db.query(Prediction)
-            .filter(Prediction.outcome == "PENDING")
-            .filter(Prediction.created_at < now - timedelta(minutes=1))
-            .order_by(Prediction.created_at.asc())
-            .all()
-        )
-        total = len(pending)
-        resolved = _resolve_batch(db, pending, now, threshold_pct)
-        return {"resolved": resolved, "total": total, "errors": total - resolved}
-    except Exception as e:
-        logger.error("Error resolving all predictions: %s", e)
-        if db is not None:
-            db.rollback()
-        return {"resolved": 0, "total": 0, "errors": 0}
-    finally:
-        if db is not None:
-            db.close()
+    with _RESOLVE_LOCK:
+        if _RESOLVE_PROGRESS["status"] == "running":
+            return {"status": "already_running", **_RESOLVE_PROGRESS}
+        _RESOLVE_PROGRESS.update({"status": "running", "resolved": 0, "total": 0, "errors": 0})
+
+    def _worker(tp=threshold_pct):
+        db: Session = None
+        try:
+            db = SessionLocal()
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            pending = (
+                db.query(Prediction)
+                .filter(Prediction.outcome == "PENDING")
+                .filter(Prediction.created_at < now - timedelta(minutes=1))
+                .order_by(Prediction.created_at.asc())
+                .all()
+            )
+            total = len(pending)
+            with _RESOLVE_LOCK:
+                _RESOLVE_PROGRESS["total"] = total
+            if total == 0:
+                with _RESOLVE_LOCK:
+                    _RESOLVE_PROGRESS.update({"status": "done", "resolved": 0, "errors": 0})
+                return
+
+            batch_size = 50
+            for i in range(0, total, batch_size):
+                batch = pending[i:i + batch_size]
+                resolved_now = _resolve_batch(db, batch, now, tp)
+                with _RESOLVE_LOCK:
+                    _RESOLVE_PROGRESS["resolved"] += resolved_now
+                    _RESOLVE_PROGRESS["errors"] += len(batch) - resolved_now
+                    _RESOLVE_PROGRESS["status"] = "running"
+                db.commit()
+
+            with _RESOLVE_LOCK:
+                _RESOLVE_PROGRESS["status"] = "done"
+        except Exception as e:
+            logger.error("Error resolving all predictions: %s", e)
+            if db is not None:
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
+            with _RESOLVE_LOCK:
+                _RESOLVE_PROGRESS["status"] = "error"
+                _RESOLVE_PROGRESS["error"] = str(e)
+        finally:
+            if db is not None:
+                db.close()
+
+    threading.Thread(target=_worker, daemon=True).start()
+    return {"status": "started", "total": _RESOLVE_PROGRESS["total"]}
+
+
+def get_resolve_progress() -> dict:
+    with _RESOLVE_LOCK:
+        return dict(_RESOLVE_PROGRESS)
 
 
 def _resolve_batch(
