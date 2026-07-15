@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/config", tags=["config"])
 broker_manager = BrokerManager()
 
 
-@router.post("/broker", response_model=BrokerSwitchResponse)
+@router.post("/broker", response_model=BrokerSwitchResponse, summary="Cambiar broker activo")
 def switch_broker(payload: BrokerSwitchRequest, db: Session = Depends(get_db)):
     db.query(BrokerConfigModel).filter(BrokerConfigModel.active.is_(True)).update(
         {BrokerConfigModel.active: False}
@@ -47,7 +47,7 @@ def switch_broker(payload: BrokerSwitchRequest, db: Session = Depends(get_db)):
     return BrokerSwitchResponse(**result)
 
 
-@router.get("/broker/status")
+@router.get("/broker/status", summary="Estado del broker activo")
 def broker_status():
     connected = False
     active = broker_manager.active_name
@@ -59,6 +59,6 @@ def broker_status():
     return {"active_broker": active, "connected": connected}
 
 
-@router.get("/brokers")
+@router.get("/brokers", summary="Listar brokers disponibles")
 def list_brokers():
     return {"available_brokers": list(BROKER_MAP.keys())}

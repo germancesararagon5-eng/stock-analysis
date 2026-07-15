@@ -8,7 +8,7 @@ router = APIRouter(prefix="/api/debug", tags=["debug"])
 broker_manager = BrokerManager()
 
 
-@router.get("/")
+@router.get("/", summary="Dashboard de depuración con filtros")
 def debug_dashboard(
     show: str = Query("all", pattern="^(all|requests|errors|broker|strategy)$"),
     limit: int = Query(20, ge=1, le=500),
@@ -45,20 +45,20 @@ def debug_dashboard(
     return snap
 
 
-@router.post("/toggle")
+@router.post("/toggle", summary="Activar/desactivar depuración")
 def toggle_debug():
     debug.enabled = not debug.enabled
     return {"enabled": debug.enabled}
 
 
-@router.post("/clear")
+@router.post("/clear", summary="Limpiar logs de depuración")
 def clear_debug():
     debug.clear()
     return {"status": "cleared"}
 
 
-@router.get("/live")
-def live_poll(after_id: int = Query(0, ge=0)):
+@router.get("/live", summary="Polling en vivo de eventos de depuración")
+def live_poll(after_id: int = Query(0, ge=0, description="Solo eventos con ID mayor a este")):
     snap = debug.snapshot()
     snap["new_requests"] = [r for r in snap.pop("recent_requests", []) if r["id"] > after_id]
     return snap

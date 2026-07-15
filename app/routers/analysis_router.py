@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from fastapi import APIRouter, Query
 
 from app.core.broker_manager import BrokerManager
-from app.core.strategies import compute_chart_data
+from app.core.strategies import STRATEGY_DESCRIPTIONS, STRATEGY_MIN_PERIODS, STRATEGY_MAP, compute_chart_data, run_strategy
 from app.schemas import (
     AnalysisRequest,
     AnalysisResponse,
@@ -14,6 +14,9 @@ from app.schemas import (
     DataResponse,
     OrderRequest,
     OrderResponse,
+    StrategyInfo,
+    TopRankingResponse,
+    TopRankingItem,
 )
 from app.services.analysis_service import get_historical_data, run_analysis
 
@@ -23,7 +26,21 @@ router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 broker_manager = BrokerManager()
 
 
-@router.post("/analyze", response_model=AnalysisResponse)
+@router.get("/strategies", summary="Listar estrategias disponibles con descripción")
+def list_strategies():
+    return {
+        "strategies": [
+            StrategyInfo(
+                name=name,
+                description=STRATEGY_DESCRIPTIONS.get(name, ""),
+                min_periods=STRATEGY_MIN_PERIODS.get(name, 26),
+            )
+            for name in STRATEGY_MAP
+        ]
+    }
+
+
+@router.post("/analyze", response_model=AnalysisResponse, summary="Ejecutar análisis técnico completo")
 def analyze(payload: AnalysisRequest):
     try:
         result = run_analysis(
@@ -56,7 +73,7 @@ def analyze(payload: AnalysisRequest):
         )
 
 
-@router.get("/chart/{ticker}", response_model=ChartResponse)
+@router.get("/chart/{ticker}", response_model=ChartResponse, summary="Obtener chart + análisis de un ticker")
 def get_chart(
     ticker: str,
     strategy: str = Query("scalping"),
@@ -64,8 +81,8 @@ def get_chart(
     periods: int = Query(60, ge=20, le=500),
 ):
     try:
-        chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
-        df = get_historical_data(ticker, interval, chart_periods)
+        min_periods = max(periods, STRATEGY_MIN_PERIODS.get(strategy, 30))
+        df = get_historical_data(ticker, interval, min_periods)
         series = compute_chart_data(df)
 
         result = run_analysis(
@@ -95,6 +112,9 @@ def get_chart(
                 macd=series.get("macd", []),
                 macd_signal=series.get("macd_signal", []),
                 macd_histogram=series.get("macd_histogram", []),
+                volume=series.get("volume", []),
+                sma_50=series.get("sma_50", []),
+                sma_200=series.get("sma_200", []),
             ),
         )
     except Exception as e:
@@ -103,6 +123,7 @@ def get_chart(
             timestamp=[], close=[], ema_9=[], ema_21=[],
             bb_upper=[], bb_mid=[], bb_lower=[], rsi_14=[],
             macd=[], macd_signal=[], macd_histogram=[],
+            volume=[], sma_50=[], sma_200=[],
         )
         return ChartResponse(
             ticker=ticker,
@@ -116,7 +137,7 @@ def get_chart(
         )
 
 
-@router.get("/data/{ticker}", response_model=DataResponse)
+@router.get("/data/{ticker}", response_model=DataResponse, summary="Obtener precio en tiempo real")
 def get_data(ticker: str):
     try:
         broker = broker_manager.get_broker()
@@ -129,7 +150,7 @@ def get_data(ticker: str):
         return DataResponse(ticker=ticker, error=str(e))
 
 
-@router.post("/order", response_model=OrderResponse)
+@router.post("/order", response_model=OrderResponse, summary="Simular orden de compra/venta")
 def place_order(payload: OrderRequest):
     broker = broker_manager.get_broker()
     result = broker.execute_order(
@@ -157,12 +178,12 @@ POPULAR_TICKERS = [
 ]
 
 
-@router.get("/top-ranking")
+@router.get("/top-ranking", response_model=TopRankingResponse, summary="Top ranking por confianza (paralelizado)")
 def top_ranking(
-    strategy: str = Query("scalping"),
-    interval: str = Query("5m"),
-    periods: int = Query(100, ge=20, le=500),
-    tickers: str = Query("", description="Comma-separated subset; empty = all popular"),
+    strategy: str = Query("scalping", description="Estrategia de trading"),
+    interval: str = Query("5m", description="Intervalo de velas"),
+    periods: int = Query(100, ge=20, le=500, description="Períodos a analizar"),
+    tickers: str = Query("", description="Tickers separados por coma; vacío = todos los populares"),
 ):
     selected = [t.strip().upper() for t in tickers.split(",") if t.strip()] if tickers else POPULAR_TICKERS
 
@@ -202,21 +223,46 @@ def top_ranking(
                     logger.warning("top-ranking future error: %s", e)
 
     results.sort(key=lambda x: x["confidence"], reverse=True)
-    return {"strategy": strategy, "interval": interval, "rankings": results}
+    return TopRankingResponse(
+        strategy=strategy,
+        interval=interval,
+        rankings=[TopRankingItem(**r) for r in results],
+    )
 
 
-@router.post("/technical-analysis")
-def technical_analysis(
+@router.get("/compare-strategies", summary="Comparar todas las estrategias para un ticker")
+def compare_strategies(
     ticker: str = Query(...),
-    strategy: str = Query("scalping"),
     interval: str = Query("1d"),
     periods: int = Query(100, ge=20, le=500),
+):
+    results = {}
+    for name in STRATEGY_MAP:
+        try:
+            r = run_analysis(ticker=ticker, strategy=name, interval=interval, periods=periods)
+            results[name] = {
+                "signal": r["signal"],
+                "confidence": r["confidence"],
+                "price": r.get("indicators", {}).get("price"),
+                "reasons": r.get("reasons", [])[:3],
+            }
+        except Exception as e:
+            results[name] = {"signal": "ERROR", "confidence": 0, "error": str(e)}
+    return {"ticker": ticker, "interval": interval, "results": results}
+
+
+@router.post("/technical-analysis", summary="Análisis técnico detallado multi-indicador")
+def technical_analysis(
+    ticker: str = Query(..., description="Símbolo del ticker"),
+    strategy: str = Query("scalping", description="Estrategia de trading"),
+    interval: str = Query("1d", description="Intervalo de velas"),
+    periods: int = Query(100, ge=20, le=500, description="Períodos a analizar"),
 ):
     from app.services.technical_analysis import analyze_series
 
     try:
-        chart_periods = max(periods, 200) if strategy == "swing" else max(periods, 30)
-        df = get_historical_data(ticker, interval, chart_periods)
+        min_periods = max(periods, STRATEGY_MIN_PERIODS.get(strategy, 30))
+        df = get_historical_data(ticker, interval, min_periods)
         series = compute_chart_data(df)
         return analyze_series(series, ticker)
     except Exception as e:

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 
 
-@router.post("/", response_model=AlertResponse)
+@router.post("/", response_model=AlertResponse, summary="Crear alerta programada")
 def create_alert(payload: AlertRequest, db: Session = Depends(get_db)):
     record = AlertConfigModel(
         ticker=payload.ticker.upper(),
@@ -38,7 +38,7 @@ def create_alert(payload: AlertRequest, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/", response_model=list[AlertResponse])
+@router.get("/", response_model=list[AlertResponse], summary="Listar alertas activas")
 def list_alerts(db: Session = Depends(get_db)):
     records = db.query(AlertConfigModel).filter(AlertConfigModel.enabled.is_(True)).all()
     return [
@@ -55,7 +55,7 @@ def list_alerts(db: Session = Depends(get_db)):
     ]
 
 
-@router.delete("/{alert_id}")
+@router.delete("/{alert_id}", summary="Eliminar alerta por ID")
 def delete_alert(alert_id: int, db: Session = Depends(get_db)):
     record = db.query(AlertConfigModel).filter(AlertConfigModel.id == alert_id).first()
     if record:
@@ -64,9 +64,12 @@ def delete_alert(alert_id: int, db: Session = Depends(get_db)):
     return {"deleted": alert_id}
 
 
-@router.post("/test-whatsapp")
+@router.post("/test-whatsapp", summary="Enviar alerta de prueba por WhatsApp")
 def test_whatsapp():
     result = send_alert(" Test de alerta desde Stock Analysis System")
     if result["status"] == "skipped":
         debug.track_error("whatsapp_test", result.get("reason", ""))
+        logger.warning("WhatsApp test skipped: %s", result.get("reason"))
+    elif result["status"] == "error":
+        logger.error("WhatsApp test error: %s", result.get("error"))
     return result

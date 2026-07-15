@@ -11,7 +11,7 @@ from app.config import settings
 from app.core.broker_manager import BrokerManager
 from app.core.debug import DebugMiddleware
 from app.database import init_db
-from app.routers import alerts_router, analysis_router, config_router, debug_router, options_router
+from app.routers import alerts_router, analysis_router, config_router, debug_router, ml_router, options_router
 from app.services.ws_manager import ws_manager
 
 logging.basicConfig(
@@ -43,7 +43,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Stock Analysis Multi-Broker API",
-    version="1.0.0",
+    description="API de análisis técnico multi-broker con soporte para Yahoo Finance, Binance (cripto) e Interactive Brokers. "
+    "Estrategias: Scalping, Swing, Momentum, Mean Reversion, Breakout, Market Structure. "
+    "Incluye alertas programadas, predictor automático, simulación de trading, dataset ML y gateway WhatsApp.",
+    summary="API de análisis técnico de acciones y cripto con múltiples estrategias",
+    version="2.4.0",
+    contact={"name": "Stock Analysis", "url": "https://github.com/anomalyco/stock-analysis"},
+    license_info={"name": "MIT", "identifier": "MIT"},
+    openapi_tags=[
+        {"name": "config", "description": "Configuración y cambio de broker activo"},
+        {"name": "analysis", "description": "Análisis técnico, charts, top-ranking y órdenes simuladas"},
+        {"name": "alerts", "description": "Alertas programadas con notificación WhatsApp"},
+        {"name": "debug", "description": "Depuración en vivo: requests, errores, eventos de broker y estrategia"},
+        {"name": "options", "description": "Configuración del background analyzer, predicciones, trading simulator y WhatsApp"},
+        {"name": "ml", "description": "Exportación de dataset ML y estadísticas de entrenamiento"},
+    ],
     lifespan=lifespan,
 )
 
@@ -61,17 +75,19 @@ app.include_router(analysis_router.router)
 app.include_router(alerts_router.router)
 app.include_router(debug_router.router)
 app.include_router(options_router.router)
+app.include_router(ml_router.router)
 
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 def index():
     return FileResponse(Path(__file__).parent / "static" / "index.html")
 
 
 @app.websocket("/api/ws")
 async def websocket_endpoint(ws: WebSocket):
+    """Conexión WebSocket para notificaciones en vivo del background analyzer."""
     await ws_manager.connect(ws)
     try:
         while True:
@@ -82,7 +98,7 @@ async def websocket_endpoint(ws: WebSocket):
         ws_manager.disconnect(ws)
 
 
-@app.get("/health")
+@app.get("/health", summary="Health check del sistema", tags=["config"])
 def health():
     active = broker_manager.active_name
     connected = False
