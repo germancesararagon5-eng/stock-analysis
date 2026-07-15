@@ -1376,6 +1376,7 @@ async function loadOptions() {
   await loadBackgroundStatus();
   await loadBackgroundResults();
   await loadMLStats();
+  await loadMLBacktestStatus();
 
   // ── Prediction stats ──
   const predTicker = document.getElementById('pred-filter').value.trim().toUpperCase();
@@ -1600,6 +1601,88 @@ async function resolvePendingPredictions() {
   loadTradingSummary();
 }
 
+// ── ML Backtesting ────────────────────────────────────────
+
+async function loadMLBacktestStatus() {
+  try {
+    const s = await api('GET', '/api/ml/status');
+    const statusEl = document.getElementById('ml-model-status');
+    const detailEl = document.getElementById('ml-model-detail');
+    if (s.trained) {
+      statusEl.innerHTML = `✅ Entrenado · ${s.samples} muestras · Acc: ${(s.accuracy * 100).toFixed(1)}%`;
+      detailEl.style.display = 'block';
+      const top3 = (s.feature_importance || []).slice(0, 3).map(f =>
+        `<span style="margin-right:8px"><b>${f.feature}</b>: ${(f.importance * 100).toFixed(1)}%</span>`
+      ).join('');
+      detailEl.innerHTML = `<div style="font-size:11px;color:var(--muted)">Top features: ${top3}</div>`;
+    } else {
+      statusEl.textContent = '⚠️ No entrenado. Necesita datos con outcomes WIN/LOSS.';
+      detailEl.style.display = 'none';
+    }
+  } catch (_) {}
+}
+
+async function trainMLModel() {
+  const btn = document.getElementById('ml-train-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Entrenando...';
+  try {
+    const r = await api('POST', '/api/ml/train');
+    if (r.error) {
+      addLog('[ML] Error: ' + r.error, 'err');
+    } else {
+      addLog('[ML] Modelo entrenado: ' + (r.accuracy * 100).toFixed(1) + '% accuracy', 'ok');
+    }
+    await loadMLBacktestStatus();
+  } catch (e) {
+    addLog('[ML] Error entrenando: ' + e.message, 'err');
+  }
+  btn.disabled = false;
+  btn.textContent = '🧠 Entrenar Modelo';
+}
+
+async function runMLBacktest() {
+  const ticker = document.getElementById('ml-bt-ticker').value.trim().toUpperCase();
+  const interval = document.getElementById('ml-bt-interval').value;
+  const periods = parseInt(document.getElementById('ml-bt-periods').value) || 100;
+  const resultsDiv = document.getElementById('ml-bt-results');
+  const tbody = document.getElementById('ml-bt-tbody');
+  const summary = document.getElementById('ml-bt-summary');
+
+  try {
+    const r = await api('GET', '/api/ml/backtest?ticker=' + encodeURIComponent(ticker)
+      + '&interval=' + interval + '&periods=' + periods);
+    if (r.error) {
+      addLog('[ML] Error: ' + r.error, 'err');
+      return;
+    }
+
+    resultsDiv.style.display = 'block';
+    summary.innerHTML = `<b>${ticker}</b> · ${interval} · ${periods} velas · ` +
+      `Acuerdo ML: <span style="color:var(--green)">${r.summary.agreement_rate}%</span> ` +
+      `(${r.summary.agree}/${r.summary.total_strategies} estrategias)`;
+
+    tbody.innerHTML = (r.results || []).map(row => {
+      const signalCls = row.signal === 'BUY' ? 'badge buy' : row.signal === 'SELL' ? 'badge sell' : '';
+      const mlCls = row.ml_prediction === 'WIN' ? 'badge buy' : row.ml_prediction === 'LOSS' ? 'badge sell' : '';
+      const agreeCls = row.agreement === 'AGREE' ? 'badge buy' : row.agreement === 'DISAGREE' ? 'badge sell' : '';
+      const conf = (row.confidence * 100).toFixed(0);
+      const winProb = row.ml_win_probability != null ? (row.ml_win_probability * 100).toFixed(0) + '%' : '—';
+      return `<tr>
+        <td><b>${row.strategy}</b></td>
+        <td><span class="${signalCls}">${row.signal}</span></td>
+        <td>${conf}%</td>
+        <td><span class="${mlCls}">${row.ml_prediction}</span></td>
+        <td>${winProb}</td>
+        <td><span class="${agreeCls}">${row.agreement}</span></td>
+      </tr>`;
+    }).join('');
+    addLog('[ML] Backtest ' + ticker + ': ' + r.summary.agreement_rate + '% acuerdo', 'ok');
+  } catch (e) {
+    addLog('[ML] Error backtest: ' + e.message, 'err');
+  }
+}
+
 // ── Trading Simulator ──────────────────────────────────────
 
 async function loadTradingSummary(ticker) {
@@ -1739,6 +1822,11 @@ function initApp() {
     loadPredictions(ticker);
   });
   document.getElementById('pred-resolve-btn').addEventListener('click', resolvePendingPredictions);
+
+  // ── ML Backtesting ──
+  loadMLBacktestStatus();
+  document.getElementById('ml-train-btn').addEventListener('click', trainMLModel);
+  document.getElementById('ml-bt-btn').addEventListener('click', runMLBacktest);
 
   // ── Trading Simulator ──
   loadTradingSummary();

@@ -1,6 +1,6 @@
 # Stock Analysis — Lista de Tareas
 
-> Estado: 297 tests pasando · Login deshabilitado · Stack: Polars nativo · v2.4.0
+> Estado: 303 tests pasando · Login deshabilitado · Stack: Polars nativo · ML: RandomForest · v2.5.0
 
 ## ✅ Completado
 
@@ -51,8 +51,8 @@
 
 ## Alta Prioridad
 
-- [ ] Entrenar modelo ML con dataset de analysis_results (scikit-learn o similar)
-- [ ] Backtesting: comparar señales de ML vs señales de estrategias clásicas
+- [x] Entrenar modelo ML con dataset de analysis_results (RandomForest, scikit-learn)
+- [x] Backtesting: comparar señales de ML vs señales de estrategias clásicas (GET /api/ml/backtest)
 
 ## Media Prioridad
 

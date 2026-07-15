@@ -12,6 +12,13 @@ stock-analysis (2.4.0) unstable; urgency=medium
   * [DOC] Documentación OpenAPI/Swagger completa (40 endpoints con summary, schemas con descriptions)
   * [ADD] Temas UI: modo Grey (escala de grises) y Light (claro) con persistencia localStorage
   * [DOC] README.md completo con manual de la app, ejemplos, API reference, flujo de desarrollo
+  * [ADD] ML Backtesting: RandomForest entrenado con indicators→outcome, comparación 6 estrategias vs ML
+  * [ADD] POST /api/ml/train — entrena modelo ML con datos históricos, retorna accuracy + feature importance
+  * [ADD] GET /api/ml/status — estado del modelo entrenado
+  * [ADD] GET /api/ml/backtest — compara señales de 6 estrategias clásicas vs predicción ML
+  * [ADD] Frontend: ML Backtesting card en pestaña Opciones (entrenar + comparar)
+  * [ADD] scikit-learn en requirements.txt
+  * [ADD] 6 tests de ML training + backtesting
 
 stock-analysis (2.3.0) unstable; urgency=medium
 

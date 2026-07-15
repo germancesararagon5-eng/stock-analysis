@@ -2,7 +2,13 @@ import logging
 
 from fastapi import APIRouter, Query
 
-from app.services.ml_service import export_dataset, get_dataset_stats
+from app.services.ml_service import (
+    backtest_comparison,
+    export_dataset,
+    get_dataset_stats,
+    get_model_status,
+    train_model,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ml", tags=["ml"])
@@ -30,3 +36,27 @@ def api_export_dataset(
 @router.get("/stats", summary="Estadísticas del dataset ML")
 def api_dataset_stats():
     return get_dataset_stats()
+
+
+@router.post("/train", summary="Entrenar modelo ML con datos históricos")
+def api_train_model():
+    result = train_model()
+    return result
+
+
+@router.get("/status", summary="Estado del modelo ML entrenado")
+def api_model_status():
+    return get_model_status()
+
+
+@router.get("/backtest", summary="Backtesting: comparar ML vs estrategias clásicas")
+def api_backtest(
+    ticker: str = Query(..., description="Símbolo del ticker"),
+    interval: str = Query("1d", description="Intervalo de velas"),
+    periods: int = Query(100, ge=20, le=500, description="Períodos a analizar"),
+):
+    return backtest_comparison(
+        ticker=ticker,
+        interval=interval,
+        periods=periods,
+    )
